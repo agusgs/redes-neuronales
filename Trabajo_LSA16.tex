@@ -1,0 +1,725 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{geometry}
+\geometry{a4paper, margin=2.5cm}
+\usepackage{hyperref}
+\usepackage{titlesec}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{mdframed}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+% Caja de "concepto clave" para resaltar definiciones pedagógicas
+\newmdenv[
+  linecolor=blue!40,
+  backgroundcolor=blue!4,
+  topline=true, bottomline=true,
+  leftline=true, rightline=true,
+  innerleftmargin=8pt, innerrightmargin=8pt,
+  innertopmargin=6pt, innerbottommargin=6pt,
+]{concepto}
+
+\title{
+    \vspace{-2cm}
+    \begin{center}
+        \textbf{\large UNIVERSIDAD NACIONAL DE QUILMES} \\
+        \vspace{0.4cm}
+        \textbf{\large Departamento de Ciencia y Tecnología} \\
+        \vspace{1.5cm}
+    \end{center}
+    \textbf{Reconocimiento Robusto de la Lengua de Señas Argentina (LSA):}\\
+    \textbf{de la clasificación estática CNN a la detección espacial con YOLO}
+}
+\author{
+    Julián Santiago González Avendaño \\
+    Agustín García Smith \\[0.4cm]
+    \textit{Dirección: Ing. Roxana Martínez}
+}
+\date{Mayo 2026}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+
+% ==================== RESUMEN ====================
+\begin{abstract}
+\noindent El reconocimiento automático de configuraciones manuales (\textit{handshapes}) es el cuello de botella de los sistemas de reconocimiento de la Lengua de Señas. El trabajo de Quiroga et al.\ (2017) reporta \textbf{96.18\%} de \textit{accuracy} usando una red neuronal convolucional (CNN) tipo LeNet sobre el dataset LSA16 con preprocesamiento manual de segmentación y alineamiento canónico, pero ese pipeline depende fuertemente de recortar la mano antes de clasificar. En este trabajo (i) replicamos el baseline del paper identificando el preprocesamiento canónico como ingrediente crítico no documentado explícitamente, (ii) mejoramos el baseline a \textbf{97.62\%~$\pm$~1.63\%} mediante \textit{transfer learning} con ResNet-18 (un modelo más moderno preentrenado en millones de imágenes), y (iii) proponemos como contribución original un detector espacial basado en YOLOv8 que opera sobre la imagen completa sin preprocesamiento y alcanza \textbf{89.74\%} de \textit{accuracy} y \textbf{mAP@50~=~0.923}. La comparación crítica muestra que sobre la imagen sin preprocesar (escenario realista de webcam), el CNN clásico colapsa al 22.12\% mientras YOLO se mantiene en ${\sim}90\%$, una diferencia de \textbf{+67 puntos porcentuales} que valida el cambio de paradigma de clasificación a detección espacial para sistemas reales.
+
+\vspace{0.4cm}
+\noindent\textbf{Palabras clave:} Lengua de Señas Argentina, reconocimiento de handshapes, redes neuronales convolucionales, detección de objetos, YOLO, transfer learning, LSA16.
+\end{abstract}
+
+\vspace{0.6cm}
+\hrule
+\vspace{0.4cm}
+
+\noindent\textbf{Nota al lector.} Este documento está pensado para una audiencia que no necesariamente tiene formación previa en \textit{machine learning} o redes neuronales. La Sección~\ref{sec:conceptos} (``Conceptos previos'') introduce desde cero los términos técnicos centrales del trabajo. Los lectores familiarizados pueden saltarla sin perder el hilo.
+
+\vspace{0.4cm}
+
+% ==================== 1. INTRODUCCIÓN ====================
+\section{Introducción}
+\label{sec:introduccion}
+
+\subsection{Contexto: Lengua de Señas y reconocimiento automático}
+
+La Lengua de Señas Argentina (LSA) es la lengua natural de la comunidad sorda en Argentina. A diferencia del español hablado, se articula con configuraciones de las manos (\textit{handshapes}), su movimiento, su posición relativa al cuerpo, y expresiones faciales. Construir un sistema que ``traduzca'' video de LSA a texto en español permitiría reducir barreras de comunicación entre personas sordas y oyentes, especialmente en contextos como atención médica, educación o trámites administrativos.
+
+El problema completo de \textit{Sign Language Recognition} (SLR) involucra varias etapas: localizar las manos en cada frame, clasificar su forma estática (\textit{handshape}), seguir su trayectoria en el tiempo, interpretar expresiones faciales, y finalmente asignar significado semántico a la secuencia~\cite{cooper2011sign}. Investigaciones previas mostraron que el reconocimiento correcto de la \emph{forma de la mano} es el factor más crítico para que todo el pipeline funcione~\cite{ronchetti2016proof}.
+
+Este trabajo se enfoca específicamente en la primera tarea: dado una imagen de una persona haciendo una seña estática, identificar cuál de 16 \textit{handshapes} prototípicos está usando. Trabajamos con el dataset público \textbf{LSA16}~\cite{ronchetti2016probsom}, formado por 800 imágenes de 10 sujetos haciendo 16 configuraciones manuales diferentes, 5 veces cada uno.
+
+\subsection{El problema central}
+
+Los trabajos publicados en LSA16 (incluido el \textit{benchmark} de referencia de Quiroga et al.~\cite{quiroga2017study}, que reporta 96.18\% de \textit{accuracy}) asumen, casi sin excepción, que la imagen de entrada al clasificador es un \emph{recorte limpio} y \emph{centrado} de la mano sobre fondo negro. Es decir: alguien (o un algoritmo de visión clásica) ya recortó la mano del resto de la imagen antes de que el modelo neural empiece a clasificar.
+
+Pero en una aplicación real --por ejemplo, una persona usando una cámara web de su computadora-- la imagen que llega al sistema es la imagen \emph{completa}: el rostro, el torso, ambas manos en algún punto del cuadro, fondo no controlado, iluminación variable. Si el sistema espera un crop limpio, alguien tiene que producir ese crop antes de invocarlo, y ese paso suele ser frágil.
+
+En este trabajo argumentamos y validamos que un cambio de paradigma resuelve esto: usar un modelo de \textbf{detección de objetos} (en particular YOLO~\cite{redmon2016yolo}) que recibe la imagen completa y produce simultáneamente (a) dónde está la mano y (b) qué configuración hace, todo en un solo modelo aprendido.
+
+\subsection{Pregunta de investigación}
+
+\begin{quote}
+\textit{¿En qué medida mejora la aplicabilidad real del reconocimiento de LSA al transicionar de un modelo de clasificación estática (CNN sobre crop preprocesado) a un modelo de detección espacial (YOLO sobre imagen completa)?}
+\end{quote}
+
+\subsection{Contribuciones del trabajo}
+
+\begin{enumerate}[itemsep=2pt]
+    \item Una \textbf{replicación reproducible} del baseline del paper de referencia, identificando un paso de preprocesamiento crítico que el paper no documenta explícitamente.
+    \item Una \textbf{caracterización honesta de la varianza} del experimento, mostrando que el promediado de muchas corridas oculta inestabilidad sustantiva del entrenamiento.
+    \item Una \textbf{mejora cuantitativa} del baseline usando \textit{transfer learning} con ResNet-18, alcanzando 97.62\%~$\pm$~1.63\% y superando al paper.
+    \item Un \textbf{pipeline automático} para generar anotaciones de \textit{bounding boxes} (cajas delimitadoras) desde las máscaras de segmentación del dataset.
+    \item Una \textbf{evaluación rigurosa} de YOLOv8 sobre el escenario realista (imagen completa sin preprocesar), alcanzando 89.74\% de \textit{accuracy} y mAP@50~$=~$0.923.
+    \item Una \textbf{ablación negativa} con un modelo de mayor capacidad, que aporta un resultado científicamente útil: en datasets pequeños, escalar el modelo no siempre mejora la clasificación.
+\end{enumerate}
+
+\vspace{0.4cm}
+
+% ==================== 2. CONCEPTOS PREVIOS ====================
+\section{Conceptos previos}
+\label{sec:conceptos}
+
+Esta sección introduce los conceptos técnicos centrales del trabajo. Si el lector ya conoce \textit{deep learning}, puede saltarla.
+
+\subsection{Aprendizaje supervisado y redes neuronales}
+
+Una \textbf{red neuronal} es una función matemática parametrizada por muchos números (los \textit{pesos}), que aprende a hacer una tarea ajustando esos pesos a partir de ejemplos. En aprendizaje supervisado, la tarea se aprende minimizando una \textbf{función de pérdida} (\textit{loss}) que mide la diferencia entre las predicciones de la red y las respuestas correctas (\textit{ground truth}) en un dataset de entrenamiento.
+
+\begin{concepto}
+\textbf{Ejemplo simple.} Si queremos una red que distinga gatos de perros, entrenamos con miles de imágenes etiquetadas como ``gato'' o ``perro''. La red empieza con pesos aleatorios y va ajustándolos para que sus predicciones se acerquen cada vez más a las etiquetas correctas. Este ajuste se hace con el algoritmo \textit{gradient descent}: en cada paso, los pesos se mueven en la dirección que más reduce la pérdida.
+\end{concepto}
+
+Los hiperparámetros de entrenamiento incluyen:
+\begin{itemize}[itemsep=1pt]
+    \item \textbf{Learning rate}: cuán grandes son los pasos de ajuste. Demasiado grande $\rightarrow$ la red no converge. Demasiado chico $\rightarrow$ tarda mucho.
+    \item \textbf{Batch size}: cuántos ejemplos procesa antes de ajustar los pesos. Típicamente 16, 32 o 64.
+    \item \textbf{Épocas}: cuántas veces la red ve cada ejemplo del dataset.
+\end{itemize}
+
+\subsection{Redes neuronales convolucionales (CNN)}
+\label{sec:cnn}
+
+Una \textbf{CNN} es un tipo especial de red neuronal diseñada para imágenes. Su componente clave es la \textbf{operación de convolución}: pequeños filtros (típicamente 3$\times$3 píxeles) ``escanean'' la imagen detectando patrones locales como bordes, esquinas o texturas.
+
+\begin{concepto}
+\textbf{Intuición clave.} Las primeras capas de una CNN detectan patrones simples (bordes verticales, contrastes, manchas de color). Las capas siguientes combinan estos patrones para detectar elementos más complejos (curvas, formas, partes de la mano). Las capas finales combinan todo para reconocer el objeto entero (la configuración manual completa).
+\end{concepto}
+
+Componentes típicos de una CNN:
+\begin{itemize}[itemsep=2pt]
+    \item \textbf{Capa convolucional} (\texttt{Conv}): aplica filtros sobre la imagen, produciendo ``mapas de características''. Cada filtro aprende a detectar un patrón distinto.
+    \item \textbf{Función de activación} (típicamente ReLU o ELU): introduce no-linealidad, permitiendo que la red aprenda relaciones complejas.
+    \item \textbf{Max-pooling}: reduce el tamaño espacial tomando el valor máximo en regiones de 2$\times$2. Hace al modelo más invariante a pequeños desplazamientos.
+    \item \textbf{Capa fully-connected} (\texttt{Linear}): al final, una capa densa combina toda la información para producir las probabilidades de cada clase.
+\end{itemize}
+
+La arquitectura \textbf{LeNet}~\cite{lecun1998gradient} (1998) fue una de las primeras CNNs exitosas. \textbf{VGG}~\cite{simonyan2014very}, \textbf{ResNet}~\cite{he2016deep} (\textit{Residual Networks}) e \textbf{Inception}~\cite{szegedy2016rethinking} son arquitecturas más modernas que mejoran resultados pero requieren más cómputo. En este trabajo usamos LeNet (réplica del paper de referencia) y ResNet-18 (nuestra mejora).
+
+\subsection{Batch normalization}
+
+Durante el entrenamiento de una red profunda, las distribuciones de activaciones (valores en cada capa) cambian a medida que se actualizan los pesos, fenómeno conocido como \textit{internal covariate shift}. Esto desestabiliza el entrenamiento y requiere learning rates más pequeños.
+
+La \textbf{Batch Normalization}~\cite{ioffe2015batch} resuelve esto normalizando las activaciones de cada capa para que en cada \textit{batch} tengan media cero y desvío estándar uno. Esto acelera y estabiliza el entrenamiento. Lo usamos en todas nuestras CNNs.
+
+\subsection{Transfer learning}
+\label{sec:transfer}
+
+El \textbf{transfer learning} es una técnica que aprovecha modelos \emph{ya entrenados} en una tarea grande (típicamente clasificación de millones de imágenes generales en ImageNet~\cite{deng2009imagenet}) y los reusa para tareas específicas con menos datos.
+
+\begin{concepto}
+\textbf{¿Por qué funciona?} Las primeras capas de una CNN aprenden cosas \emph{universales} sobre imágenes (cómo detectar bordes, texturas, formas elementales). Estas características son útiles tanto para distinguir gatos de perros como para clasificar configuraciones manuales. Reusar esas capas en lugar de entrenarlas desde cero es como \emph{empezar la tarea con conocimiento previo}, no desde la ignorancia total.
+\end{concepto}
+
+En la práctica, transfer learning consiste en:
+\begin{enumerate}[itemsep=2pt]
+    \item Cargar un modelo (por ejemplo ResNet-18) con sus pesos preentrenados en ImageNet.
+    \item Reemplazar la última capa (que predecía las 1000 clases de ImageNet) por una nueva capa para nuestras 16 clases de LSA16.
+    \item Entrenar (\textit{fine-tunear}) el modelo en nuestro dataset, ajustando finamente los pesos preentrenados con un \textit{learning rate} pequeño para no romper lo que ya sabe.
+\end{enumerate}
+
+\subsection{Clasificación vs.\ detección de objetos}
+\label{sec:cls-vs-det}
+
+Es fundamental entender la diferencia entre estas dos tareas, porque el trabajo se basa en transicionar de una a la otra.
+
+\paragraph{Clasificación de imágenes.} Dada una imagen, la salida es una \emph{etiqueta} (por ejemplo, ``configuración manual: V''). El modelo asume que la imagen contiene el objeto centrado y bien recortado. \textbf{No localiza nada}; solo dice qué hay. Es la tarea que resuelve LeNet sobre los crops del LSA16.
+
+\paragraph{Detección de objetos.} Dada una imagen, la salida es una lista de \emph{objetos detectados}, cada uno con (a) una \textbf{caja delimitadora} (\textit{bounding box}) que indica dónde está, y (b) la clase a la que pertenece. La detección se hace sobre la imagen \emph{completa} sin preprocesar. Es la tarea que resuelve YOLO.
+
+\begin{concepto}
+\textbf{Por qué importa para este trabajo.} En el escenario real (webcam), el sistema no tiene un crop limpio: tiene la imagen completa con la persona, ambas manos, el fondo. Un clasificador puro no puede manejar esto porque le falta el paso de ``encontrar dónde mirar''. Un detector como YOLO sí puede.
+\end{concepto}
+
+\subsection{YOLO: detector de objetos en una sola etapa}
+
+\textbf{YOLO} (\textit{You Only Look Once}~\cite{redmon2016yolo}) es una familia de modelos de detección de objetos. La idea central es que la imagen completa pasa una sola vez por una red convolucional que produce \emph{directamente}: las coordenadas $(x_c, y_c, ancho, alto)$ de cada bounding box, y la clase y confianza asociadas. Comparado con métodos previos de detección que hacían varios pasos secuenciales (proposición de regiones, luego clasificación), YOLO es mucho más rápido manteniendo buena precisión.
+
+En este trabajo usamos \textbf{YOLOv8}~\cite{jocher2023ultralytics} (versión 2023 de Ultralytics), que es el estado del arte abierto al momento del trabajo. Viene en cinco tamaños desde \texttt{nano} (3M parámetros, muy rápido) hasta \texttt{x-large} (68M parámetros, más preciso pero lento).
+
+\subsection{Métricas de evaluación}
+
+\subsubsection{Accuracy}
+
+Métrica clásica de clasificación: porcentaje de predicciones correctas sobre el total. Si tenemos 100 imágenes y el modelo clasifica 95 correctamente, \textit{accuracy} = 95\%.
+
+\subsubsection{IoU (Intersection over Union)}
+\label{sec:iou}
+
+Métrica de localización: dada una \textit{bounding box} predicha por el modelo y la \textit{bounding box} real (\textit{ground truth}), IoU mide \textbf{cuánto se solapan}:
+
+$$ \text{IoU} = \frac{\text{Área de intersección}}{\text{Área de unión}} $$
+
+IoU = 1 significa que las dos cajas son idénticas. IoU = 0 significa que no se solapan en absoluto. En la práctica, se considera que una detección es ``correcta'' si IoU $>$ 0.5 con la caja real.
+
+\subsubsection{Precision y Recall}
+
+\textbf{Precision} = de todas las detecciones que hizo el modelo, ¿qué fracción es correcta?\\
+\textbf{Recall} = de todos los objetos que existían (ground truth), ¿qué fracción detectó el modelo?
+
+Idealmente queremos ambos altos, pero suele haber un trade-off: ser muy estricto sube precision pero baja recall, y viceversa.
+
+\subsubsection{mAP (mean Average Precision)}
+
+Métrica estándar de detección de objetos, combina precision y recall a distintos umbrales de IoU:
+
+\begin{itemize}[itemsep=1pt]
+    \item \textbf{mAP@50}: promedio de precision considerando una detección correcta si IoU $\geq$ 0.5. Es la métrica más usada.
+    \item \textbf{mAP@50-95}: promedio sobre múltiples umbrales (0.5, 0.55, ..., 0.95). Más estricta. Es la métrica principal de los benchmarks modernos como COCO.
+\end{itemize}
+
+En este trabajo reportamos ambas para los modelos YOLO.
+
+\subsection{Optimización: paisaje de pérdida y basins de atracción}
+\label{sec:basins}
+
+Al entrenar una red, lo que hace el optimizador (Adam, SGD, etc.) es minimizar la función de pérdida ajustando millones de pesos. Conceptualmente, esto puede pensarse como ``rodar una pelota cuesta abajo'' en un paisaje de pérdida de altísima dimensión.
+
+\begin{concepto}
+\textbf{Analogía geográfica.} El paisaje de pérdida es como una geografía multidimensional. Cada punto del paisaje es una combinación de valores de los pesos; la altura del paisaje en ese punto es el valor de la pérdida. Entrenar es como soltar una pelota: rueda cuesta abajo siguiendo la pendiente hasta caer al fondo de algún valle.
+
+Un \textbf{basin de atracción} (cuenca de atracción) es una zona del paisaje donde toda pelota soltada ahí termina en el mismo punto. La inicialización aleatoria de los pesos es como soltar la pelota en un punto al azar: si caemos en un mal basin (un valle superficial lejos del óptimo real), terminamos con un modelo malo. Si caemos en un buen basin, terminamos con un modelo bueno.
+
+El término ``basin'' viene de la cuenca hidrográfica en geografía: el área donde toda gota de agua termina en el mismo río.
+\end{concepto}
+
+Esta intuición es importante porque explica:
+\begin{itemize}[itemsep=2pt]
+    \item Por qué entrenamientos con la misma arquitectura pero distinta semilla aleatoria dan resultados diferentes.
+    \item Por qué el \textit{transfer learning} funciona tan bien: empezar con pesos preentrenados es como soltar la pelota \emph{ya dentro de un buen basin}, no en una posición aleatoria.
+    \item Por qué el \textit{data augmentation} ayuda pero no resuelve el problema raíz: cambia ligeramente la forma del paisaje pero no elimina los malos basins.
+\end{itemize}
+
+\subsection{Data augmentation}
+
+Cuando el dataset de entrenamiento es chico, una técnica común es \textbf{augmentation}: generar variaciones sintéticas de las imágenes durante el entrenamiento (rotaciones, traslaciones, cambios de brillo, ruido). El modelo nunca ve exactamente la misma imagen dos veces, lo que actúa como regularización y suele mejorar generalización.
+
+En este trabajo usamos augmentation de manera \emph{cuidadosa}: específicamente \textbf{evitamos el flip horizontal} porque convertir una mano derecha en izquierda rompería la etiqueta del dataset (LSA16 solo anota la mano derecha).
+
+% ==================== 3. ESTADO DEL ARTE ====================
+\section{Estado del arte}
+\label{sec:soa}
+
+\subsection{Reconocimiento de handshapes en LSA}
+
+El dataset LSA16 fue introducido por Ronchetti et al.~\cite{ronchetti2016probsom} junto con el método \textbf{ProbSom}, un clasificador basado en la transformada de Radon (una técnica clásica de procesamiento de imágenes que no usa redes neuronales). ProbSom alcanza 92.30\% de \textit{accuracy} y es la primera línea base publicada sobre el dataset.
+
+Posteriormente, Quiroga et al.~\cite{quiroga2017study} compararon varias arquitecturas CNN modernas sobre el mismo dataset (Tabla~\ref{tab:paper-baseline}). Su mejor resultado fue VGG-16 con 95.92\%, pero notablemente LeNet --la CNN más simple-- alcanzó 95.78\%, casi tan bien como VGG con muchísimos menos parámetros. Por eso lo eligen como baseline ``simple pero efectivo'' del paper.
+
+\begin{table}[h]
+\centering
+\caption{Resultados del paper de referencia~\cite{quiroga2017study} sobre LSA16 segmentado.}
+\label{tab:paper-baseline}
+\begin{tabular}{lr}
+\toprule
+\textbf{Arquitectura} & \textbf{Accuracy} \\
+\midrule
+Feedforward (baseline simple, sin convoluciones) & 86.58\% \\
+LeNet~\cite{lecun1998gradient} & 95.78\% \\
+All Convolutional~\cite{springenberg2014striving} & 94.56\% \\
+\textbf{VGG-16~\cite{simonyan2014very}} & \textbf{95.92\%} \\
+ResNet-34~\cite{he2016deep} & 93.49\% \\
+Inception-v3~\cite{szegedy2016rethinking} & 91.98\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+El paper también explora el efecto del preprocesamiento manteniendo LeNet fijo (Tabla~\ref{tab:paper-preproc}). Aquí se ve que la versión segmentada en color (RGB) da el mejor resultado (96.18\%); las versiones reducidas pierden información útil para discriminar dedos.
+
+\begin{table}[h]
+\centering
+\caption{Efecto del preprocesamiento sobre LeNet, reportado por Quiroga et al.~\cite{quiroga2017study}.}
+\label{tab:paper-preproc}
+\begin{tabular}{lr}
+\toprule
+\textbf{Preprocesamiento} & \textbf{Accuracy} \\
+\midrule
+Raw (mano sin segmentar fondo) & 83.54\% \\
+\textbf{Segmented Hand RGB} & \textbf{96.18\%} \\
+Grayscale (escala de grises) & 87.08\% \\
+Black and White (binarizado) & 91.38\% \\
+Contour only (solo contorno) & 80.64\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Detección de objetos: del clasificador al detector}
+
+Históricamente, los métodos de detección de objetos hacían dos pasos: (a) proponer regiones candidatas con un algoritmo clásico, y (b) clasificar cada región con una CNN. Esto era lento. \textbf{YOLO}~\cite{redmon2016yolo} cambió el paradigma al unificar ambos pasos en una única red que produce todas las detecciones de la imagen en una sola pasada (de ahí el nombre: \textit{You Only Look Once}).
+
+Versiones sucesivas (YOLOv2~\cite{redmon2017yolov2}, YOLOv3~\cite{redmon2018yolov3}, hasta YOLOv8~\cite{jocher2023ultralytics}) han mejorado precisión y velocidad. YOLOv8 (Ultralytics, 2023) viene preentrenada en el dataset \textbf{COCO}~\cite{lin2014coco} (más de un millón de imágenes con 80 categorías comunes). Esto la convierte en una excelente base para transfer learning hacia tareas específicas como nuestro LSA16.
+
+Hasta donde sabemos, no existe en la literatura una evaluación sistemática de YOLO sobre LSA16 que contraste rigurosamente con el baseline CNN clásico. Esto es precisamente lo que este trabajo aporta.
+
+% ==================== 4. DATASET ====================
+\section{Dataset LSA16}
+\label{sec:dataset}
+
+\subsection{Composición}
+
+El dataset LSA16 consta de \textbf{800 imágenes} de 10 sujetos que ejecutan 5 repeticiones de cada una de las 16 configuraciones manuales más usadas en LSA. Las imágenes fueron capturadas en condiciones controladas (fondo blanco, ropa negra, iluminación uniforme) y los intérpretes usaron \textbf{guantes fluorescentes} de colores saturados para facilitar la segmentación. El nombre de cada archivo sigue el patrón \texttt{clase\_sujeto\_repeticion.png}.
+
+Las 16 clases son: Five (mano abierta), Four (cuatro dedos), Horns (cuernos), Curve (mano curva), Fingers (montoncito), Double, Hook (gancho), Index (índice), L, Flat (mano plana), Mitten (manopla), Beak (pico), Thumb (pulgar), Fist (puño), Telephone (shaka) y V.
+
+\subsection{Variantes disponibles}
+
+El dataset se distribuye en dos versiones que serán claves para entender los experimentos siguientes:
+
+\begin{itemize}[itemsep=2pt]
+    \item \texttt{lsa16\_raw/}: imagen completa de 640$\times$480 píxeles. Muestra a la persona completa con ambos guantes visibles, fondo blanco y ropa negra. \textbf{Es el escenario realista}, parecido a lo que vería una cámara web.
+    \item \texttt{lsa16\_segmented\_right\_hand/}: recorte de la mano derecha (la dominante en la mayoría de los sujetos) con el fondo seteado a negro. Tamaño variable, típicamente ${\sim}150\times150$ píxeles. \textbf{Es el input que el paper usa}.
+\end{itemize}
+
+Es importante notar que \textbf{las 16 clases corresponden a configuraciones de la mano derecha únicamente}. La mano izquierda (con guante de color distinto, típicamente cian) aparece en algunas imágenes en posición no-dominante pero no tiene etiqueta de clase asociada.
+
+% ==================== 5. PIPELINE CNN BASELINE ====================
+\section{Pipeline CNN baseline}
+\label{sec:cnn-pipeline}
+
+En esta sección replicamos el baseline del paper, identificamos un paso crítico no documentado, y proponemos una mejora con \textit{transfer learning}.
+
+\subsection{Réplica del paper y descubrimiento del preprocesamiento canónico}
+
+Al entrenar LeNet sobre \texttt{lsa16\_segmented\_right\_hand/} con los hiperparámetros exactos del paper (Adam, \textit{learning rate} 0.0007, 20 épocas, sin augmentation), obtuvimos en 3 corridas iniciales \textbf{83.33\%~$\pm$~2.12\%}, \textbf{12.85 puntos porcentuales por debajo} del 96.18\% reportado. Este gap era demasiado grande para atribuirlo a ruido estadístico.
+
+La inspección visual del dataset reveló la causa: \textbf{las manos en las imágenes segmentadas no están en orientación canónica}. Los sujetos pueden tener la mano vertical, inclinada o horizontal, según el sujeto y la repetición. Esa variabilidad espacial le exige al modelo aprender invariancia a rotación a partir de apenas $\sim$45 ejemplos por clase, lo que excede su capacidad.
+
+Revisando el paper original del dataset (Ronchetti et al.\ 2016~\cite{ronchetti2016probsom}, referenciado por el paper de 2017), encontramos un \textbf{pipeline de normalización geométrica} que el paper de 2017 omite mencionar explícitamente:
+
+\begin{enumerate}[itemsep=2pt]
+    \item Cálculo del componente conectado más grande para obtener la máscara binaria limpia de la mano.
+    \item Cálculo de los ejes principales mediante \textbf{PCA}\footnote{\textbf{PCA} (\textit{Principal Component Analysis}, Análisis de Componentes Principales) es una técnica estadística que encuentra las direcciones de mayor variabilidad en un conjunto de puntos. Aplicado a los píxeles de una mano, identifica el eje a lo largo del cual la mano está más extendida.} sobre las coordenadas de los píxeles de la mano. La dirección con mayor variabilidad indica hacia dónde apunta la mano.
+    \item Rotación de la imagen para alinear el eje principal con la vertical (los dedos apuntando hacia arriba).
+    \item Corrección de inversión 180°: contando ``cruces horizontales'' (transiciones entre fondo y mano sobre líneas horizontales), determinamos si los dedos quedaron arriba o abajo. El lado con más cruces son los dedos (porque están separados, generando muchas transiciones). Si quedaron abajo, rotamos 180°.
+    \item Recorte al \textit{bounding box} de la mano y redimensión a 128$\times$128 manteniendo \textit{aspect ratio} (relleno con negro donde haga falta).
+\end{enumerate}
+
+Implementamos este pipeline en \texttt{src/preprocessing.py}. Al regenerar el dataset y reentrenar LeNet con los mismos hiperparámetros del paper, la \textit{accuracy} sube a \textbf{95.83\%~$\pm$~1.18\%} en 3 corridas, indistinguible del 96.18\% del paper dentro del ruido estadístico. \textbf{El gap de 12.85~pp se debía exclusivamente a este preprocesamiento canónico no documentado en el texto del paper de 2017.}
+
+\subsection{Arquitectura LeNet usada}
+
+Réplica fiel de la especificación del paper:
+\begin{itemize}[itemsep=2pt]
+    \item Cuatro bloques convolucionales con 32, 64, 128, 256 canales respectivamente.
+    \item Filtros 3$\times$3 con \textit{padding}.
+    \item Cada bloque: \texttt{Conv $\rightarrow$ ELU~\cite{clevert2015fast} $\rightarrow$ MaxPool(2,2) $\rightarrow$ BatchNorm~\cite{ioffe2015batch}}.
+    \item Cabeza clasificadora: \texttt{Flatten $\rightarrow$ Linear(16384, 512) $\rightarrow$ ELU $\rightarrow$ Linear(512, 16)}.
+\end{itemize}
+
+Total: aproximadamente 8.8 millones de parámetros entrenables.
+
+\subsection{Caracterización honesta de la varianza}
+\label{sec:varianza}
+
+El paper de referencia reporta el promedio de 100 corridas. Esto es estadísticamente prudente pero \emph{esconde} información importante. Al ampliar nuestro experimento de 3 a 10 corridas observamos una distribución bimodal: la \textit{accuracy} media baja a \textbf{91.25\%} y el desvío estándar sube a \textbf{7.83\%}. Dos corridas particulares (semillas 8 y 9) produjeron 70\% y 85\% respectivamente, muy por debajo del resto.
+
+El análisis de la matriz de confusión en la semilla 8 reveló el fenómeno: el modelo cayó en un \textbf{mode collapse} -- predice ``Flat'' (clase 9) en 17 de los 24 errores, ignorando la mayor parte de las otras clases. No es un problema de imágenes específicas sino del propio proceso de entrenamiento: con esa inicialización aleatoria particular, el optimizador quedó atrapado en un \textit{basin} de mala calidad (ver Sección~\ref{sec:basins}) del paisaje de pérdida.
+
+Este resultado tiene una implicación metodológica: el paper, al promediar 100 corridas, \emph{diluye} estos \textit{outliers}. Reportar el promedio sin la varianza puede ocultar inestabilidad práctica relevante.
+
+\subsection{Mejoras propuestas}
+
+\subsubsection{Data augmentation: hipótesis refutada}
+
+Hipotetizamos que data augmentation (rotación $\pm 10°$, traslación $\pm 10\%$, jitter de color leve) actuaría como regularización y reduciría la varianza al estabilizar el entrenamiento. El experimento sobre 10 corridas dio \textbf{91.62\%~$\pm$~6.71\%}: la media casi no cambió (+0.37~pp) y la varianza apenas bajó.
+
+Más interesante todavía: augmentation \emph{arregló} el \textit{mode collapse} de la semilla 8 (70\% $\rightarrow$ 91.25\%) pero \emph{introdujo} un nuevo outlier en la semilla 1 (95\% $\rightarrow$ 75\%). Es decir, \emph{cambió qué semillas eran problemáticas} pero no eliminó la existencia de \textit{basins} malos.
+
+\textbf{Interpretación}: el problema no es falta de datos, sino la \emph{inicialización aleatoria}. Augmentation reshapea ligeramente el paisaje de pérdida pero no resuelve la raíz. La solución de fondo es atacar la inicialización, lo que nos lleva al siguiente experimento.
+
+\subsubsection{Transfer learning con ResNet-18}
+
+Sustituyendo LeNet por una ResNet-18~\cite{he2016deep} preentrenada en ImageNet~\cite{deng2009imagenet} (con la última capa reemplazada para 16 clases y \textit{fine-tuning} end-to-end con \textit{learning rate} 10$^{-4}$), obtuvimos \textbf{97.62\%~$\pm$~1.63\%} en 10 corridas. Comparativa en la Tabla~\ref{tab:cnn-comparison}.
+
+\begin{table}[h]
+\centering
+\caption{Resultados CNN sobre canonical 128$\times$128 (10 corridas cada uno).}
+\label{tab:cnn-comparison}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Modelo} & \textbf{Media} & \textbf{Std} & \textbf{Peor run} & \textbf{Mejor run} \\
+\midrule
+LeNet & 91.25\% & 7.83\% & 70.00\% & 97.50\% \\
+LeNet + augmentation & 91.62\% & 6.71\% & 75.00\% & 100.00\% \\
+\textbf{ResNet-18 (transfer)} & \textbf{97.62\%} & \textbf{1.63\%} & \textbf{93.75\%} & \textbf{100.00\%} \\
+\midrule
+\textit{Paper benchmark (100 runs)} & \textit{96.18\%} & \textit{n/r} & \textit{n/r} & \textit{n/r} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+ResNet-18 supera al paper por \textbf{+1.44~pp} y reduce la varianza por un factor de \textbf{4.8$\times$}. Ningún run cae por debajo de 93.75\% (versus 70\% del peor LeNet desde cero). La explicación coincide con la intuición de la Sección~\ref{sec:basins}: los pesos preentrenados de ImageNet posicionan al modelo en un \textit{basin} de buena calidad desde el inicio, eliminando la lotería de la inicialización aleatoria.
+
+% ==================== 6. PIPELINE YOLO ====================
+\section{Pipeline YOLO}
+\label{sec:yolo-pipeline}
+
+Habiendo establecido un baseline CNN sólido sobre imágenes preprocesadas, ahora atacamos el problema realista: clasificar directamente sobre la imagen completa, sin paso manual de recorte ni alineamiento.
+
+\subsection{Generación automática de anotaciones}
+
+YOLO requiere un dataset con \textbf{anotaciones de bounding boxes}: por cada imagen, un archivo de texto que indique para cada objeto la clase y las coordenadas $(x_c, y_c, ancho, alto)$ normalizadas. LSA16 viene con \emph{máscaras de segmentación} pero \emph{no} con bounding boxes, así que tuvimos que generarlas automáticamente.
+
+\subsubsection{Iteración 1: detección por color (descartada)}
+
+El primer enfoque fue umbralización en espacio HSV: dado que los guantes son fluorescentes de color saturado, los píxeles ``saturados'' de la imagen raw son candidatos a guante. Usando el ``color dominante'' de la imagen segmentada como referencia per-imagen (porque el color de guante varía entre sujetos: algunos rosa/magenta, otros cian), buscamos esa banda de color en la imagen raw para localizar la mano.
+
+Este enfoque \textbf{falló sistemáticamente en 76 de las 800 imágenes (9.5\%)}. La causa: las regiones de \emph{piel facial saturada} (especialmente labios con lipstick rojizo) caen en el mismo rango de Hue del guante magenta, generando \textit{bounding boxes} sobre \emph{la cara} en lugar de la mano. El método de color es estructuralmente incapaz de discriminar mano y cara cuando comparten un Hue dominante similar.
+
+\subsubsection{Iteración 2: template matching enmascarado (adoptada)}
+
+Reemplazamos la heurística de color por \textbf{template matching} usando OpenCV. La idea es simple y robusta: dado que \texttt{lsa16\_segmented\_right\_hand/} es literalmente un \emph{recorte} de \texttt{lsa16\_raw/} con el fondo seteado a negro, podemos buscar la posición exacta donde la imagen segmentada ``encaja'' dentro de la raw.
+
+Concretamente, usamos \texttt{cv2.matchTemplate} con el método de \textit{normalized cross-correlation} y una máscara binaria que indica qué píxeles del template son relevantes (los no-negros). El algoritmo desliza el template sobre la imagen raw y encuentra la posición de mejor coincidencia estructural --no solo de color-- de los píxeles relevantes.
+
+Resultados sobre las 800 imágenes:
+\begin{itemize}[itemsep=2pt]
+    \item \textbf{794/800 (99.25\%) con bbox correctamente detectada.}
+    \item 6 fallos: casos donde la imagen segmentada parece haber sido procesada levemente y no es un crop literal del raw.
+    \item En las 76 imágenes donde el método de color era erróneo (cara), el template matching es siempre correcto. Verificación visual cruzada.
+\end{itemize}
+
+\textbf{Lección metodológica}: cuando existe \textit{ground truth} indirecto disponible (en este caso, la segmented siendo un crop del raw), buscar coincidencia estructural es muy preferible a heurísticas basadas en color que pueden generar falsos positivos.
+
+El dataset final (\texttt{dataset\_yolo/}) tiene partición estratificada por clase 70/15/15: 556 train, 121 val, 117 test.
+
+\subsection{Configuración del entrenamiento}
+
+Usamos YOLOv8 (Ultralytics) con \textit{transfer learning} desde pesos preentrenados en COCO. La Tabla~\ref{tab:yolo-hyperparams} resume los hiperparámetros y el razonamiento detrás de cada uno.
+
+\begin{table}[h]
+\centering
+\caption{Hiperparámetros del entrenamiento YOLOv8 y razonamiento.}
+\label{tab:yolo-hyperparams}
+\small
+\begin{tabular}{p{3.2cm}p{2.8cm}>{\raggedright\arraybackslash}p{8.5cm}}
+\toprule
+\textbf{Parámetro} & \textbf{Valor} & \textbf{Razón} \\
+\midrule
+Modelo & yolov8s.pt & balance velocidad/precisión, 11M parámetros (comparable a ResNet-18) \\
+Pesos iniciales & COCO pretrained & transfer learning desde 1.28M imágenes de 80 clases \\
+\texttt{imgsz} & 640 & default Ultralytics; mantiene suficiente detalle de los dedos \\
+\texttt{batch} & 32 & limitado por la memoria de la GPU \\
+\texttt{epochs} & 100 (patience=20) & con early stopping de 20 épocas sin mejora \\
+\texttt{optimizer} & AdamW (auto, lr=0.0005) & seleccionado automáticamente por Ultralytics \\
+\texttt{fliplr} & \textbf{0.0} & CRÍTICO: flip horizontal cambia mano derecha por izquierda y rompe el ground truth \\
+\texttt{flipud} & 0.0 & sin sentido geométrico para handshapes \\
+\texttt{mosaic} & 0.0 & mosaic junta 4 imágenes en una; con una sola mano por imagen distorsionaría la relación espacial \\
+\texttt{degrees}, \texttt{translate}, \texttt{scale} & 10°, 0.1, 0.1 & jitter geométrico leve \\
+\texttt{hsv\_s}, \texttt{hsv\_v} & 0.4, 0.3 & variación moderada de iluminación \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Hardware utilizado}
+
+Comparativa de costo computacional (entrenamiento de yolov8s, 88 épocas con early stop):
+
+\begin{itemize}[itemsep=2pt]
+    \item Mac M3 Pro (CPU): aproximadamente 3 a 5 horas estimadas.
+    \item NVIDIA RTX 3080~Ti (GPU): \textbf{8.5 minutos}.
+\end{itemize}
+
+Speedup de aproximadamente \textbf{20$\times$} a favor de la GPU, consistente con la diferencia esperada entre CPU y GPU dedicada para redes neuronales. Para la tesis usamos los resultados de GPU. Esta diferencia ilustra que el entrenamiento es accesible en hardware modesto pero requiere paciencia; para iteración rápida una GPU es muy recomendable.
+
+\subsection{Resultados}
+
+La evaluación sobre el split de test (117 imágenes) calcula tanto métricas estándar de detección (mAP, IoU) como \textit{classification accuracy} comparable con el baseline CNN (para cada imagen, tomamos la clase de la detección con mayor confianza y la comparamos con el ground truth). Resultados en la Tabla~\ref{tab:yolo-results}.
+
+\begin{table}[h]
+\centering
+\caption{Resultados de YOLOv8s sobre LSA16 raw (test set, 117 imágenes).}
+\label{tab:yolo-results}
+\begin{tabular}{lr}
+\toprule
+\textbf{Métrica} & \textbf{Valor} \\
+\midrule
+Detection rate (\% de imágenes donde detecta algo) & 94.9\% (111/117) \\
+Classification accuracy (sobre todas las test) & 89.74\% \\
+Classification accuracy (solo cuando detecta) & 94.59\% \\
+IoU promedio (calidad de localización) & 0.779 \\
+IoU mediana & 0.818 \\
+mAP@50 & 0.923 \\
+mAP@50-95 & 0.875 \\
+Precision & 0.880 \\
+Recall & 0.894 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Interpretando: YOLOv8 detecta correctamente la mano en el 94.9\% de las imágenes; en el 5.1\% restante no produce detección (``miss''). Cuando detecta, clasifica correctamente al 94.59\%. La calidad de localización es muy alta (IoU mediana 0.82, recordar que IoU = 1 es match perfecto). Las métricas estándar de detección (mAP@50 = 0.923) confirman que el modelo entrenado es sólido.
+
+Las confusiones más frecuentes se dan entre clases visualmente similares: V $\rightarrow$ Horns (2 errores, ambas configuraciones con 2 dedos extendidos), Beak $\rightarrow$ Fingers/Index (1 error cada una, poses cerradas con punta visible). Estas confusiones reflejan ambigüedad intrínseca del dominio --un humano no entrenado en LSA también las confundiría-- y no fallas del modelo.
+
+\subsection{Ablación: ¿más capacidad mejora el resultado?}
+
+Para testear si yolov8s era el modelo óptimo, probamos una variante más ambiciosa: \texttt{yolov8m.pt} (26M parámetros, aproximadamente el doble que yolov8s) con resolución de entrada de 960 píxeles por lado (más detalle). El entrenamiento tomó 39.7 minutos en GPU, casi cinco veces más que yolov8s. Resultados comparativos en la Tabla~\ref{tab:yolo-ablation}.
+
+\begin{table}[h]
+\centering
+\caption{Ablación: yolov8s @ 640 vs yolov8m @ 960.}
+\label{tab:yolo-ablation}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Métrica} & \textbf{yolov8s @ 640} & \textbf{yolov8m @ 960} & \textbf{$\Delta$} \\
+\midrule
+Detection rate & 94.9\% & \textbf{98.3\%} & +3.4 pp \\
+Accuracy (todas las test) & 89.74\% & 90.60\% & +0.86 pp \\
+Accuracy (solo detectadas) & \textbf{94.59\%} & 92.17\% & $-$2.42 pp \\
+IoU promedio & 0.779 & \textbf{0.899} & +12 pp \\
+IoU mediana & 0.818 & \textbf{0.949} & +13 pp \\
+mAP@50 & 0.923 & 0.925 & $\approx$ \\
+mAP@50-95 & \textbf{0.875} & 0.864 & $-$1.1 pp \\
+Tiempo entrenamiento & 8.5 min & 39.7 min & 4.7$\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+El resultado tiene dos caras:
+
+\paragraph{Lo que sí mejoró drásticamente.} La calidad de localización (IoU mediana 0.82 $\rightarrow$ 0.95, las cajas están casi pegadas a la mano real) y la cobertura (de 6 a 2 \textit{misses}). Más resolución y más capacidad ayudan a encontrar manos chicas o lejanas del frame.
+
+\paragraph{Lo que no mejoró (incluso empeoró ligeramente).} La accuracy de clasificación cuando el modelo detecta. Bajó 2.42~pp. Esto sugiere un \textbf{sobreajuste leve}: con 26 millones de parámetros y solo 556 imágenes de entrenamiento (aproximadamente 47 mil parámetros por sample de train), el modelo más grande comienza a memorizar características muy específicas de los ejemplos vistos, perdiendo capacidad de generalizar.
+
+\textbf{Conclusión metodológica}: en datasets pequeños como LSA16, el cuello de botella ya no es la capacidad del modelo sino la \emph{similitud visual intrínseca entre clases}. Más parámetros no resuelve eso. Para esta tesis reportamos \textbf{yolov8s como modelo principal} (mejor classification y más liviano) y yolov8m como ablación negativa --un resultado científicamente valioso que confirma que \emph{más no siempre es mejor}.
+
+% ==================== 7. COMPARACIÓN EXPERIMENTAL ====================
+\section{Comparación experimental: CNN vs YOLO}
+\label{sec:comparacion}
+
+La Tabla~\ref{tab:final-comparison} consolida los resultados de todos los modelos experimentados sobre LSA16.
+
+\begin{table}[h]
+\centering
+\caption{Comparación final de todos los modelos sobre LSA16.}
+\label{tab:final-comparison}
+\small
+\begin{tabular}{p{4cm}p{3.8cm}rp{2.8cm}}
+\toprule
+\textbf{Modelo} & \textbf{Input} & \textbf{Accuracy} & \textbf{Notas} \\
+\midrule
+LeNet (paper, 100 runs) & canonical 128$\times$128 & 96.18\% & benchmark referencia \\
+LeNet (nuestro, 10 runs) & canonical 128$\times$128 & 91.25\% $\pm$ 7.83\% & varianza honesta \\
+LeNet + aug (10 runs) & canonical 128$\times$128 & 91.62\% $\pm$ 6.71\% & hipótesis refutada \\
+\textbf{ResNet-18 (10 runs)} & canonical 128$\times$128 & \textbf{97.62\% $\pm$ 1.63\%} & supera al paper \\
+\midrule
+LeNet sobre raw (10 runs) & raw 640$\times$480 & 22.12\% $\pm$ 5.76\% & CNN colapsa \\
+\textbf{YOLOv8s} & \textbf{raw 640$\times$480} & \textbf{89.74\%} & \textbf{modelo principal} \\
+YOLOv8m @ 960 & raw 640$\times$480 & 90.60\% & ablation: más $\neq$ mejor \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Lectura comparativa}
+
+La tabla cuenta dos historias paralelas que vale la pena leer separadas.
+
+\paragraph{Modelos sobre la mano preprocesada (canonical 128$\times$128).} En este eje, ResNet-18 (97.62\%) supera al baseline LeNet (91-96\%). Transfer learning resuelve la inestabilidad del CNN entrenado desde cero. La comparación se reduce a \emph{``qué arquitectura clasifica mejor sobre un crop limpio''}. Escalar a una arquitectura más moderna y usar conocimiento previo (ImageNet) sí aporta una mejora cuantificable.
+
+\paragraph{Modelos sobre el escenario realista (imagen completa 640$\times$480 sin preprocesamiento).} Aquí ocurre la diferencia cualitativa que da significado al trabajo:
+
+\begin{itemize}[itemsep=3pt]
+    \item LeNet colapsa a \textbf{22.12\%}, apenas mejor que el azar (1/16 = 6.25\%) pero inviable como sistema real. Sin preprocesamiento manual, el CNN simplemente no puede operar.
+    \item YOLOv8s alcanza \textbf{89.74\%}, una diferencia de \textbf{+67~puntos porcentuales} respecto a LeNet sobre la misma entrada.
+    \item YOLOv8m apenas mejora a 90.60\%, sugiriendo que estamos cerca del techo realista del enfoque YOLO para este dataset.
+\end{itemize}
+
+La diferencia de +67~pp en el escenario realista es la \textbf{contribución principal del trabajo}. El cambio de paradigma de clasificación a detección espacial habilita el procesamiento de imágenes no controladas, donde el CNN tradicional fracasa.
+
+\subsection{Implicaciones para sistemas reales}
+
+Si el objetivo es desplegar un sistema de reconocimiento de LSA en una aplicación real (webcam de notebook, cámara de smartphone), las implicaciones del experimento son claras:
+
+\begin{enumerate}[itemsep=2pt]
+    \item Un clasificador CNN tradicional \textbf{no es suficiente} a menos que se acompañe de un pipeline de visión clásica que recorte y alinee la mano antes de clasificar. Ese pipeline es frágil en condiciones reales (iluminación variable, fondo no blanco, distancia variable al sujeto).
+    \item Un detector espacial como YOLO opera \textbf{end-to-end sobre la imagen completa} sin necesidad de preprocesamiento manual, alcanzando una accuracy operativa de aproximadamente 90\% sobre nuestro test set.
+    \item YOLOv8s es lo suficientemente liviano (11M parámetros, ${\sim}22$MB de pesos) para inferencia en tiempo real en hardware modesto.
+\end{enumerate}
+
+% ==================== 8. CONCLUSIONES ====================
+\section{Conclusiones y trabajo futuro}
+
+\subsection{Conclusiones}
+
+Este trabajo presenta un estudio completo sobre LSA16 que va desde la replicación rigurosa del paper de referencia hasta una propuesta original basada en detección espacial. Los hallazgos principales son:
+
+\begin{enumerate}[itemsep=2pt]
+    \item \textbf{Replicación reproducible del baseline}: identificamos el preprocesamiento canónico (alineamiento por PCA + corrección de inversión) como ingrediente crítico no documentado explícitamente en el paper de 2017. Sin él, LeNet alcanza solo 83\%; con él, 95.83\%.
+    \item \textbf{Caracterización honesta de la varianza}: 10 corridas revelan inestabilidad de entrenamiento que el promedio de 100 corridas del paper diluye. Es importante reportar la varianza, no solo la media.
+    \item \textbf{Mejora sobre el paper}: ResNet-18 con transfer learning alcanza 97.62\%~$\pm$~1.63\%, superando al paper en +1.44~pp con varianza 4.8$\times$ menor. La intuición es que los pesos preentrenados de ImageNet posicionan al modelo en un \textit{basin} bueno desde el inicio, eliminando la lotería de la inicialización aleatoria.
+    \item \textbf{Refutación de hipótesis sobre data augmentation}: aplicar augmentation no resuelve la inestabilidad de LeNet desde cero; cambia qué semillas son problemáticas pero no las elimina. El problema raíz es la inicialización aleatoria.
+    \item \textbf{Pipeline automático de anotaciones YOLO}: implementamos generación automática vía template matching enmascarado (99.25\% de éxito), evitando los falsos positivos sobre regiones faciales que produce la detección por color.
+    \item \textbf{YOLOv8s sobre raw alcanza 89.74\% de accuracy y mAP@50~$=~$0.923}, con \textbf{+67~pp sobre LeNet} en la misma entrada. \emph{Esta es la contribución central del trabajo}: detección espacial supera a clasificación tradicional cuando operamos sobre imágenes no preprocesadas.
+    \item \textbf{Ablación negativa con yolov8m+imgsz=960}: mejora drásticamente la localización (IoU mediana 0.82 $\rightarrow$ 0.95) pero \emph{no} la clasificación (sobreajuste leve). Confirma que en datasets pequeños, más capacidad no siempre ayuda.
+\end{enumerate}
+
+La hipótesis central del trabajo se valida: \textbf{en escenarios realistas no preprocesados, la detección espacial supera ampliamente a la clasificación de imagen entera}. Esto justifica la elección de YOLO (o detectores equivalentes) como base para sistemas reales de reconocimiento de LSA.
+
+\subsection{Trabajo futuro}
+
+\begin{itemize}[itemsep=2pt]
+    \item \textbf{Evaluación LOSO} (\textit{leave-one-subject-out}) sobre todos los modelos: en cada fold, se deja a un sujeto entero fuera del entrenamiento y se evalúa sobre él. Es un protocolo más representativo del uso real con usuarios nuevos (típicamente baja la accuracy 10-15~pp pero es más honesto).
+    \item \textbf{ResNet-18 + data augmentation}: combinación no testeada que podría llevar la accuracy CNN cerca del 99\%, a un costo computacional adicional de aproximadamente 90 minutos en CPU.
+    \item \textbf{Variante YOLOv8n (nano)}: modelo aún más liviano (3M parámetros) para deployment en tiempo real en hardware modesto como un notebook o un smartphone.
+    \item \textbf{Test end-to-end con webcam real}: validar el pipeline en condiciones no controladas (iluminación variable, fondo no blanco, distancia variable al sujeto).
+    \item \textbf{Escalamiento a video y handshapes dinámicos}: el dataset LSA64~\cite{ronchetti2016lsa64} contiene secuencias temporales de señas completas. Requiere arquitecturas espacio-temporales (CNNs 3D o LSTM sobre features YOLO) que son la extensión natural de este trabajo.
+\end{itemize}
+
+% ==================== BIBLIOGRAFÍA ====================
+\begin{thebibliography}{99}
+
+\bibitem{quiroga2017study}
+F.~Quiroga, R.~Antonio, F.~Ronchetti, L.~Lanzarini, A.~Rosete,
+\emph{A Study of Convolutional Architectures for Handshape Recognition applied to Sign Language},
+XXIII Congreso Argentino de Ciencias de la Computación, 2017.
+
+\bibitem{ronchetti2016probsom}
+F.~Ronchetti, F.~Quiroga, L.~Lanzarini, C.~Estrebou,
+\emph{Handshape Recognition for Argentinian Sign Language using ProbSom},
+Journal of Computer Science and Technology 16(1):1--5, 2016.
+
+\bibitem{ronchetti2016lsa64}
+F.~Ronchetti, F.~Quiroga, C.~Estrebou, L.~Lanzarini, A.~Rosete,
+\emph{LSA64: An Argentinian Sign Language Dataset},
+XXII Congreso Argentino de Ciencias de la Computación, 2016.
+
+\bibitem{ronchetti2016proof}
+F.~Ronchetti, F.~Quiroga, C.~Estrebou, L.~Lanzarini, A.~Rosete,
+\emph{Sign Language Recognition Without Frame-Sequencing Constraints: A Proof of Concept on the Argentinian Sign Language},
+Springer LNCS, pp.~338--349, 2016.
+
+\bibitem{cooper2011sign}
+H.~Cooper, B.~Holt, R.~Bowden,
+\emph{Sign Language Recognition},
+Visual Analysis of Humans, Springer London, pp.~539--562, 2011.
+
+\bibitem{lecun1998gradient}
+Y.~LeCun, L.~Bottou, Y.~Bengio, P.~Haffner,
+\emph{Gradient-based learning applied to document recognition},
+Proceedings of the IEEE 86(11):2278--2324, 1998.
+
+\bibitem{simonyan2014very}
+K.~Simonyan, A.~Zisserman,
+\emph{Very Deep Convolutional Networks for Large-Scale Image Recognition},
+arXiv:1409.1556, 2014.
+
+\bibitem{springenberg2014striving}
+J.T.~Springenberg, A.~Dosovitskiy, T.~Brox, M.~Riedmiller,
+\emph{Striving for Simplicity: The All Convolutional Net},
+arXiv:1412.6806, 2014.
+
+\bibitem{he2016deep}
+K.~He, X.~Zhang, S.~Ren, J.~Sun,
+\emph{Deep Residual Learning for Image Recognition},
+IEEE CVPR, pp.~770--778, 2016.
+
+\bibitem{szegedy2016rethinking}
+C.~Szegedy, V.~Vanhoucke, S.~Ioffe, J.~Shlens, Z.~Wojna,
+\emph{Rethinking the Inception Architecture for Computer Vision},
+IEEE CVPR, 2016.
+
+\bibitem{redmon2016yolo}
+J.~Redmon, S.~Divvala, R.~Girshick, A.~Farhadi,
+\emph{You Only Look Once: Unified, Real-Time Object Detection},
+IEEE CVPR, 2016.
+
+\bibitem{redmon2017yolov2}
+J.~Redmon, A.~Farhadi,
+\emph{YOLO9000: Better, Faster, Stronger},
+IEEE CVPR, 2017.
+
+\bibitem{redmon2018yolov3}
+J.~Redmon, A.~Farhadi,
+\emph{YOLOv3: An Incremental Improvement},
+arXiv:1804.02767, 2018.
+
+\bibitem{jocher2023ultralytics}
+G.~Jocher, A.~Chaurasia, J.~Qiu,
+\emph{Ultralytics YOLOv8},
+\url{https://github.com/ultralytics/ultralytics}, 2023.
+
+\bibitem{lin2014coco}
+T.-Y.~Lin, M.~Maire, S.~Belongie, J.~Hays, P.~Perona, D.~Ramanan, P.~Doll\'ar, C.L.~Zitnick,
+\emph{Microsoft COCO: Common Objects in Context},
+ECCV, 2014.
+
+\bibitem{deng2009imagenet}
+J.~Deng, W.~Dong, R.~Socher, L.-J.~Li, K.~Li, L.~Fei-Fei,
+\emph{ImageNet: A Large-Scale Hierarchical Image Database},
+IEEE CVPR, 2009.
+
+\bibitem{kingma2014adam}
+D.P.~Kingma, J.~Ba,
+\emph{Adam: A Method for Stochastic Optimization},
+arXiv:1412.6980, 2014.
+
+\bibitem{ioffe2015batch}
+S.~Ioffe, C.~Szegedy,
+\emph{Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift},
+ICML, 2015.
+
+\bibitem{clevert2015fast}
+D.-A.~Clevert, T.~Unterthiner, S.~Hochreiter,
+\emph{Fast and Accurate Deep Network Learning by Exponential Linear Units (ELUs)},
+arXiv:1511.07289, 2015.
+
+\end{thebibliography}
+
+\end{document}

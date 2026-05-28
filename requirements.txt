@@ -1,0 +1,12 @@
+torch==2.5.1
+torchvision==0.20.1
+numpy
+matplotlib
+opencv-python
+scikit-learn
+pillow
+seaborn
+jupyter
+ipykernel
+ultralytics
+pandas

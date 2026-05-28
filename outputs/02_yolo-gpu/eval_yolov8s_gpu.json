@@ -1,0 +1,47 @@
+{
+  "run_name": "yolov8s_gpu",
+  "weights": "/Users/agusgs/Projects/universidad/redes-neuronales/trabajo-parcial/outputs/02_yolo-gpu/yolov8s_gpu/weights/best.pt",
+  "n_test": 117,
+  "detection_rate": 0.9487179487179487,
+  "misses": 6,
+  "classification_accuracy": 0.8974358974358975,
+  "classification_accuracy_detected_only": 0.9459459459459459,
+  "mean_iou": 0.7791188120371954,
+  "median_iou": 0.8184941305621485,
+  "mAP50": 0.9232618856837608,
+  "mAP50_95": 0.8752042983058608,
+  "precision": 0.8798637786698945,
+  "recall": 0.8941987759493659,
+  "mismatches": [
+    {
+      "file": "12_7_2.png",
+      "gt": "Beak",
+      "pred": "Fingers"
+    },
+    {
+      "file": "12_7_3.png",
+      "gt": "Beak",
+      "pred": "Index"
+    },
+    {
+      "file": "16_10_3.png",
+      "gt": "V",
+      "pred": "Horns"
+    },
+    {
+      "file": "16_2_3.png",
+      "gt": "V",
+      "pred": "Horns"
+    },
+    {
+      "file": "4_10_5.png",
+      "gt": "Curve",
+      "pred": "Beak"
+    },
+    {
+      "file": "5_8_4.png",
+      "gt": "Fingers",
+      "pred": "Double"
+    }
+  ]
+}
