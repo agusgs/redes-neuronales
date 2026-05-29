@@ -112,6 +112,7 @@ def main() -> None:
     iou_matches = []
     detection_rate = 0
     misses = 0  # imágenes donde el modelo no detectó nada
+    misses_files = []
     mismatches = []  # (fname, gt_cls, pred_cls) cuando hay clasificación incorrecta
 
     for img_path, res in zip(test_imgs, results):
@@ -123,6 +124,7 @@ def main() -> None:
 
         if res.boxes is None or len(res.boxes) == 0:
             misses += 1
+            misses_files.append({"file": img_path.name, "gt": LSA16_NAMES[gt_cls]})
             y_true.append(gt_cls)
             y_pred.append(-1)  # sin detección
             continue
@@ -213,6 +215,7 @@ def main() -> None:
         "n_test": n_total,
         "detection_rate": detection_rate / n_total,
         "misses": misses,
+        "misses_files": misses_files,
         "classification_accuracy": accuracy,
         "classification_accuracy_detected_only": accuracy_detected_only,
         "mean_iou": mean_iou,
@@ -225,7 +228,7 @@ def main() -> None:
                        for fn, gt, pr in mismatches],
     }
     eval_path = output_dir / f"eval_{run_name}.json"
-    eval_path.write_text(json.dumps(eval_record, indent=2))
+    eval_path.write_text(json.dumps(eval_record, indent=2), encoding="utf-8")
     print(f"✓ Eval completo: {eval_path}")
 
 

@@ -35,7 +35,7 @@ RESULTS_JSONL = OUTPUT_DIR / "results.jsonl"
 
 def append_jsonl(record: dict) -> None:
     RESULTS_JSONL.parent.mkdir(parents=True, exist_ok=True)
-    with RESULTS_JSONL.open("a") as f:
+    with RESULTS_JSONL.open("a", encoding="utf-8") as f:
         f.write(json.dumps(record) + "\n")
 
 

@@ -42,17 +42,34 @@ def _count_crossings(mask_strip: np.ndarray) -> int:
     diff = np.abs(np.diff(binary, axis=1))
     return int(diff.sum())
 
-
 def _fingers_at_bottom(mask: np.ndarray) -> bool:
-    """True si los dedos (más cruces) están en la mitad inferior de la mano."""
+    """True si los dedos están en la mitad inferior de la mano.
+    
+    Heurística Combinada: 
+    1. Transiciones: Dedos separados generan más cruces horizontales. (Falla en 1 solo dedo).
+    2. Centro de Masa: La palma tiene más concentración de píxeles. (Falla en dedos en gancho).
+    Solo rotamos la imagen 180 grados si AMBAS heurísticas coinciden en que 
+    los dedos están apuntando hacia abajo, logrando robustez en todas las clases.
+    """
     ys, _ = np.where(mask > 0)
     if len(ys) == 0:
         return False
+        
     y_min, y_max = ys.min(), ys.max()
     y_mid = (y_min + y_max) // 2
+    
+    # 1. Heurística del Centro de Masa
+    y_mid_box = (y_min + y_max) / 2.0
+    y_com = ys.mean()
+    com_flips = y_com < y_mid_box
+    
+    # 2. Heurística de Transiciones (Paper Original)
     upper_crossings = _count_crossings(mask[y_min:y_mid])
     lower_crossings = _count_crossings(mask[y_mid:y_max + 1])
-    return lower_crossings > upper_crossings
+    cross_flips = lower_crossings > upper_crossings
+    
+    return com_flips and cross_flips
+
 
 
 def _aspect_preserving_resize(img: np.ndarray, target_size: int) -> np.ndarray:

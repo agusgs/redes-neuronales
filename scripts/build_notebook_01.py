@@ -847,7 +847,7 @@ def main() -> None:
     nb.cells = cells
 
     NOTEBOOK_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with NOTEBOOK_PATH.open("w") as f:
+    with NOTEBOOK_PATH.open("w", encoding="utf-8") as f:
         nbf.write(nb, f)
     print(f"Notebook generado: {NOTEBOOK_PATH}")
     print(f"  {len(cells)} celdas")

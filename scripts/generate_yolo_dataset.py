@@ -90,7 +90,7 @@ def _write_dataset_yaml(class_names: list[str]) -> None:
         f"nc: {len(class_names)}\n"
         f"names:\n{names_block}\n"
     )
-    (OUT_ROOT / "dataset.yaml").write_text(yaml_content)
+    (OUT_ROOT / "dataset.yaml").write_text(yaml_content, encoding="utf-8")
 
 
 def main() -> None:
@@ -133,7 +133,7 @@ def main() -> None:
         # Escribir anotación
         label_fname = fname.replace(".png", ".txt")
         label_path = OUT_ROOT / "labels" / split / label_fname
-        label_path.write_text(f"{sample.label} {xc:.6f} {yc:.6f} {ww:.6f} {hh:.6f}\n")
+        label_path.write_text(f"{sample.label} {xc:.6f} {yc:.6f} {ww:.6f} {hh:.6f}\n", encoding="utf-8")
 
         counts[split][sample.label] += 1
         processed += 1

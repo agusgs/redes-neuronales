@@ -1,7 +1,7 @@
 # Dataset LSA16 en formato Ultralytics YOLO
 # Generado por scripts/generate_yolo_dataset.py
 
-path: /Users/agusgs/Projects/universidad/redes-neuronales/trabajo-parcial/dataset_yolo
+path: C:\Users\garci\Projects\uni\reder-neuronales-repo\dataset_yolo
 train: images/train
 val:   images/val
 test:  images/test

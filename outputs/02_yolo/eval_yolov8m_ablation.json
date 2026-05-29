@@ -1,0 +1,72 @@
+{
+  "run_name": "yolov8m_ablation",
+  "weights": "C:\\Users\\garci\\Projects\\uni\\reder-neuronales-repo\\outputs\\02_yolo\\yolov8m_ablation\\weights\\best.pt",
+  "n_test": 117,
+  "detection_rate": 0.9829059829059829,
+  "misses": 2,
+  "misses_files": [
+    {
+      "file": "12_10_3.png",
+      "gt": "Beak"
+    },
+    {
+      "file": "5_8_4.png",
+      "gt": "Fingers"
+    }
+  ],
+  "classification_accuracy": 0.905982905982906,
+  "classification_accuracy_detected_only": 0.9217391304347826,
+  "mean_iou": 0.8990892111216584,
+  "median_iou": 0.9485992324131745,
+  "mAP50": 0.9252274565712066,
+  "mAP50_95": 0.8637223200410702,
+  "precision": 0.9071873998341067,
+  "recall": 0.8690765501018674,
+  "mismatches": [
+    {
+      "file": "12_5_3.png",
+      "gt": "Beak",
+      "pred": "Double"
+    },
+    {
+      "file": "12_7_2.png",
+      "gt": "Beak",
+      "pred": "Fingers"
+    },
+    {
+      "file": "12_7_3.png",
+      "gt": "Beak",
+      "pred": "Double"
+    },
+    {
+      "file": "13_7_3.png",
+      "gt": "Thumb",
+      "pred": "Fist"
+    },
+    {
+      "file": "2_7_4.png",
+      "gt": "Four",
+      "pred": "V"
+    },
+    {
+      "file": "4_9_5.png",
+      "gt": "Curve",
+      "pred": "L"
+    },
+    {
+      "file": "5_4_4.png",
+      "gt": "Fingers",
+      "pred": "Fist"
+    },
+    {
+      "file": "6_1_4.png",
+      "gt": "Double",
+      "pred": "Flat"
+    },
+    {
+      "file": "9_5_3.png",
+      "gt": "L",
+      "pred": "Horns"
+    }
+  ]
+}

@@ -129,20 +129,16 @@ python scripts/generate_yolo_dataset.py
 
 ```bash
 # Réplica del paper LeNet sobre canonical (~20 min en CPU)
-python experiments/01_baseline_paper.py --mode canonical --n-runs 10 \
-    --note "réplica paper"
+python experiments/01_baseline_paper.py --mode canonical --n-runs 10 --note "réplica paper"
 
 # Test de data augmentation (~25 min)
-python experiments/01_baseline_paper.py --mode canonical --augment --n-runs 10 \
-    --note "canonical + augmentation"
+python experiments/01_baseline_paper.py --mode canonical --augment --n-runs 10 --note "canonical + augmentation"
 
 # Transfer learning con ResNet-18 (~90 min en CPU, ~15 min en GPU)
-python experiments/01_baseline_paper.py --mode canonical --model resnet18 --n-runs 10 \
-    --note "ResNet18 transfer"
+python experiments/01_baseline_paper.py --mode canonical --model resnet18 --n-runs 10 --note "ResNet18 transfer"
 
 # Baseline raw (colapso esperado, ~25 min)
-python experiments/01_baseline_paper.py --mode raw --n-runs 10 \
-    --note "LeNet sobre raw"
+python experiments/01_baseline_paper.py --mode raw --n-runs 10 --note "LeNet sobre raw"
 ```
 
 Cada corrida se loguea en `outputs/01_baseline/results.jsonl` y `experiments_log.md`.
@@ -152,20 +148,13 @@ Cada corrida se loguea en `outputs/01_baseline/results.jsonl` y `experiments_log
 ```bash
 # Entrenamiento principal: YOLOv8s sobre raw, transfer learning desde COCO
 # ~10 min en GPU NVIDIA, ~3-5 hs en CPU
-python experiments/02_yolo_train.py \
-    --model yolov8s.pt --imgsz 640 --batch 32 \
-    --device 0 \    # ← cambiar a 'cpu' si no hay GPU
-    --epochs 100 --name yolov8s_principal
+python experiments/02_yolo_train.py --model yolov8s.pt --imgsz 640 --batch 32 --device 0 --epochs 100 --name yolov8s_principal
 
 # Ablación con modelo más grande (~40 min en GPU)
-python experiments/02_yolo_train.py \
-    --model yolov8m.pt --imgsz 960 --batch 16 \
-    --device 0 \
-    --epochs 100 --name yolov8m_ablation
+python experiments/02_yolo_train.py --model yolov8m.pt --imgsz 960 --batch 16 --device 0 --epochs 100 --name yolov8m_ablation
 
 # Evaluación de cada run sobre el split de test
-python experiments/02_yolo_eval.py \
-    --weights outputs/02_yolo/yolov8s_principal/weights/best.pt
+python experiments/02_yolo_eval.py --weights outputs/02_yolo/yolov8s_principal/weights/best.pt
 ```
 
 **La primera vez que se ejecuta YOLO**, descarga automáticamente los pesos preentrenados de COCO (`yolov8s.pt` y/o `yolov8m.pt`, ~22-52MB cada uno).
@@ -175,8 +164,7 @@ python experiments/02_yolo_eval.py \
 Si solo querés usar el modelo entrenado que viene en el paquete:
 
 ```bash
-python experiments/02_yolo_eval.py \
-    --weights outputs/02_yolo-gpu/yolov8s_gpu/weights/best.pt
+python experiments/02_yolo_eval.py --weights outputs/02_yolo-gpu/yolov8s_gpu/weights/best.pt
 ```
 
 Esto genera:

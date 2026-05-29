@@ -62,7 +62,7 @@ def _paper_ref(result_name: str, model: str) -> float | None:
 
 def _append_jsonl(record: dict) -> None:
     RESULTS_JSONL.parent.mkdir(parents=True, exist_ok=True)
-    with RESULTS_JSONL.open("a") as f:
+    with RESULTS_JSONL.open("a", encoding="utf-8") as f:
         f.write(json.dumps(record) + "\n")
 
 
@@ -87,9 +87,10 @@ def _append_markdown(result: ExperimentResult, config: TrainConfig, note: str,
         RESULTS_MD.write_text(
             "# Bitácora de experimentos — Baseline paper\n\n"
             "Resultados de la réplica del paper Quiroga et al. 2017 sobre LSA16.\n\n"
-            + header
+            + header,
+            encoding="utf-8",
         )
-    with RESULTS_MD.open("a") as f:
+    with RESULTS_MD.open("a", encoding="utf-8") as f:
         f.write(row)
 
 
