@@ -19,3 +19,4 @@ Resultados de la réplica del paper Quiroga et al. 2017 sobre LSA16.
 | 2026-05-29 13:18 | Canonical aligned [ResNet18-transfer] | — | 10 | 20 | 97.38% | 1.63% | — | — | — |
 | 2026-05-29 13:27 | Canonical aligned [ResNet18-transfer] | ✓ | 10 | 20 | 98.00% | 1.50% | — | — | — |
 | 2026-05-29 17:44 | Segmented RGB [LeNetLSA16] | — | 10 | 20 | 83.12% | 2.45% | 96.18% | +13.06pp | — |
+| 2026-05-30 08:36 | Raw (full image) [ResNet18-transfer] | — | 10 | 20 | 77.00% | 4.34% | — | — | — |

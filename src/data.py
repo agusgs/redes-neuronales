@@ -120,3 +120,18 @@ def stratified_split(
     train = [samples[i] for i in train_idx]
     test = [samples[i] for i in test_idx]
     return train, test
+
+
+def loso_split(
+    samples: Sequence[Sample],
+    test_subject: int,
+) -> tuple[list[Sample], list[Sample]]:
+    """Leave-One-Subject-Out (LOSO) cross-validation split.
+    
+    Asegura cero contaminación: aparta todas las imágenes del `test_subject` 
+    (1..10) para el test set, y usa las imágenes de los otros 9 sujetos 
+    para el train set.
+    """
+    train = [s for s in samples if s.subject != test_subject]
+    test = [s for s in samples if s.subject == test_subject]
+    return train, test

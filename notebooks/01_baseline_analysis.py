@@ -458,6 +458,9 @@ else:
 # El éxito de YOLO en este dataset dependió de desactivar ciertos algoritmos automáticos de la librería Ultralytics:
 # - `fliplr=0.0`: **CRÍTICO**. Por defecto, YOLO voltea horizontalmente el 50% de las imágenes para hacer Data Augmentation. En Lenguaje de Señas, voltear una mano derecha la convierte en una mano izquierda, y ciertas señas asimétricas pierden por completo su significado.
 # - `mosaic=0.0`: Por defecto, YOLO une 4 imágenes en un collage (mosaico). Como en LSA16 cada imagen tiene exactamente una mano centrada que ocupa la mayor parte de la pantalla, crear mosaicos destruye la relación espacial realista que el modelo necesita aprender.
+#
+# **¿Por qué no ejecutamos YOLO 10 veces como hicimos con LeNet?**
+# A diferencia de los scripts estándar de PyTorch (donde la aleatoriedad hace variar drásticamente el resultado), el motor de **Ultralytics YOLOv8 es 100% determinista por defecto**. Internamente, YOLO fuerza la semilla matemática `seed=0` en PyTorch, Numpy y CUDA, obligando a la GPU a realizar las operaciones en el orden exacto cada vez. Dado que para YOLO pre-generamos las carpetas de *train/test* estáticas (en lugar de separarlas aleatoriamente en tiempo de ejecución), si entrenamos el modelo 100 veces, obtendremos literalmente los mismos pesos numéricos exactos en la red neuronal las 100 veces (reproducibilidad perfecta). Por lo tanto, promediar múltiples corridas carece matemáticamente de sentido para este experimento.
 
 # %%
 training_curves = PROJECT_ROOT / 'outputs' / '02_yolo' / 'yolov8s_principal' / 'results.png'

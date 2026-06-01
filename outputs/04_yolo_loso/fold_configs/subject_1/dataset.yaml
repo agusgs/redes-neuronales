@@ -1,0 +1,22 @@
+
+path: C:\Users\garci\Projects\uni\reder-neuronales-repo\outputs\04_yolo_loso\fold_configs\subject_1
+train: C:\Users\garci\Projects\uni\reder-neuronales-repo\outputs\04_yolo_loso\fold_configs\subject_1\train.txt
+val: C:\Users\garci\Projects\uni\reder-neuronales-repo\outputs\04_yolo_loso\fold_configs\subject_1\val.txt
+
+names:
+  0: Five
+  1: Four
+  2: Horns
+  3: Curve
+  4: Fingers
+  5: Double
+  6: Hook
+  7: Index
+  8: L
+  9: Flat
+  10: Mitten
+  11: Beak
+  12: Thumb
+  13: Fist
+  14: Telephone
+  15: V
