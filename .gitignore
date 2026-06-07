@@ -3,5 +3,27 @@ __pycache__/
 *.pyc
 .ipynb_checkpoints/
 .DS_Store
-outputs/*/models/*.pt
-outputs/*/models/*.pth
+
+# Generated outputs and models
+outputs/*
+!outputs/.gitkeep
+*.pt
+*.pth
+runs/*
+!runs/.gitkeep
+
+# Datasets and derived data
+lsa16_raw/*
+!lsa16_raw/.gitkeep
+lsa16_segmented_right_hand/*
+!lsa16_segmented_right_hand/.gitkeep
+lsa16_segmented_canonical/*
+!lsa16_segmented_canonical/.gitkeep
+dataset_yolo/*
+!dataset_yolo/.gitkeep
+
+# Notebooks
+notebooks/*.ipynb
+
+# CLI configs
+.antigravitycli

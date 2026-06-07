@@ -31,6 +31,7 @@ trabajo-parcial/
 ├── Propuesta_LSA16.tex                ← propuesta original
 ├── paper-lsa16-cnn.pdf                ← paper de referencia (Quiroga 2017)
 ├── paper-lsa16.pdf                    ← paper del dataset (Ronchetti 2016)
+├── material_referencia/               ← material de consulta y documentación adicional
 │
 ├── requirements.txt                   ← dependencias Python
 ├── .tool-versions                     ← versión de Python para asdf
@@ -59,28 +60,18 @@ trabajo-parcial/
 ├── notebooks/
 │   └── 01_baseline_paper_replication.ipynb  ← notebook técnico (narrativa + figuras)
 │
-├── lsa16_raw/                         ← 800 imágenes raw 640×480 (dataset original)
-├── lsa16_segmented_right_hand/        ← 800 imágenes segmentadas (dataset original)
+├── lsa16_raw/                         ← (vacío) Descargar dataset original y colocar aquí las imágenes raw 640×480
+├── lsa16_segmented_right_hand/        ← (vacío) Descargar dataset original y colocar aquí las imágenes segmentadas
 │
 └── outputs/                           ← resultados experimentales
-    ├── 01_baseline/
+    └── 01_baseline/
     │   ├── results.jsonl                Log machine-readable (1 línea por experimento)
     │   ├── experiments_log.md           Log human-readable (tabla markdown)
     │   ├── notebook_notes.md            Notas internas del proceso
     │   └── figures/                     PNG generados (preprocessing, etc.)
-    └── 02_yolo-gpu/
-        ├── results.jsonl                Log de runs YOLO
-        ├── eval_*.json                  Métricas de evaluación
-        ├── figures/                     Confusion matrices, IoU distributions, bboxes
-        ├── yolov8s_gpu/                 Run principal (88 épocas, GPU)
-        │   ├── results.csv              Métricas por época
-        │   ├── results.png              Curvas de entrenamiento
-        │   └── weights/best.pt          ★ MODELO ENTRENADO ★
-        └── yolov8m_imgsz960-2/          Ablación con modelo más grande
-            └── weights/best.pt
 ```
 
-**Nota**: los directorios `lsa16_segmented_canonical/` y `dataset_yolo/` **no se incluyen** porque se generan automáticamente con los scripts de preprocesamiento (ver más abajo).
+**Nota**: los directorios `lsa16_segmented_canonical/`, `dataset_yolo/`, `outputs/` y `runs/` están vacíos inicialmente ya que su contenido se genera automáticamente. Las imágenes de `lsa16_raw/` y `lsa16_segmented_right_hand/` tampoco se incluyen en el repositorio por su tamaño y deben descargarse del proyecto original de LSA16 (ver instrucciones más abajo).
 
 ---
 
@@ -115,7 +106,30 @@ export CPPFLAGS="-I$(brew --prefix xz)/include -I$(brew --prefix openssl@3)/incl
 asdf install python 3.12.5
 ```
 
-### 2. Generar los datasets derivados
+### 2. Descargar y ubicar el dataset original
+
+Este proyecto utiliza el dataset LSA16. Antes de generar los datasets derivados, es necesario obtener las imágenes originales:
+1. Descargá el dataset desde la página del proyecto LSA16: [https://midusi.github.io/lsa16/index.html](https://midusi.github.io/lsa16/index.html).
+2. Extraé las imágenes raw (640x480) y colocalas dentro del directorio `lsa16_raw/`.
+3. Extraé las imágenes segmentadas y colocalas dentro del directorio `lsa16_segmented_right_hand/`.
+
+**Nota sobre la citación del dataset:**
+Los autores originales del dataset solicitan que si se utiliza en alguna investigación, se cite su artículo original [Handshape recognition for Argentinian Sign Language using ProbSom](http://sedici.unlp.edu.ar/bitstream/handle/10915/52376/Documento_completo.pdf-PDFA.pdf?sequence=1):
+
+```bibtex
+@Article{Ronchetti2016, 
+  author="Ronchetti, Franco and Quiroga, Facundo and Lanzarini, Laura and Estrebou, Cesar", 
+  title="Handshape Recognition for Argentinian Sign Language using ProbSom", 
+  journal=" Journal of Computer Science and Technology ", 
+  year="2016", 
+  volume="16", 
+  number="1", 
+  pages="1--5", 
+  issn="1666-6038" 
+}
+```
+
+### 3. Generar los datasets derivados
 
 ```bash
 # Genera lsa16_segmented_canonical/ (mano alineada canónicamente, ~1 min)
@@ -125,7 +139,7 @@ python scripts/preprocess_canonical.py
 python scripts/generate_yolo_dataset.py
 ```
 
-### 3. Reproducir experimentos CNN
+### 4. Reproducir experimentos CNN
 
 ```bash
 # Réplica del paper LeNet sobre canonical (~20 min en CPU)
@@ -143,7 +157,7 @@ python experiments/01_baseline_paper.py --mode raw --n-runs 10 --note "LeNet sob
 
 Cada corrida se loguea en `outputs/01_baseline/results.jsonl` y `experiments_log.md`.
 
-### 4. Reproducir experimentos YOLO
+### 5. Reproducir experimentos YOLO
 
 ```bash
 # Entrenamiento principal: YOLOv8s sobre raw, transfer learning desde COCO
@@ -159,20 +173,17 @@ python experiments/02_yolo_eval.py --weights outputs/02_yolo/yolov8s_principal/w
 
 **La primera vez que se ejecuta YOLO**, descarga automáticamente los pesos preentrenados de COCO (`yolov8s.pt` y/o `yolov8m.pt`, ~22-52MB cada uno).
 
-### 5. Inferencia con el modelo ya entrenado (sin reentrenar)
+### 6. Inferencia con un modelo ya entrenado
 
-Si solo querés usar el modelo entrenado que viene en el paquete:
+Si ya corriste los experimentos de entrenamiento y querés evaluar un modelo específico:
 
 ```bash
-python experiments/02_yolo_eval.py --weights outputs/02_yolo-gpu/yolov8s_gpu/weights/best.pt
+python experiments/02_yolo_eval.py --weights runs/detect/yolov8s_principal/weights/best.pt
 ```
 
-Esto genera:
-- `outputs/02_yolo-gpu/eval_yolov8s_gpu.json` (métricas detalladas)
-- `outputs/02_yolo-gpu/figures/confusion_yolov8s_gpu.png` (matriz de confusión)
-- `outputs/02_yolo-gpu/figures/iou_distribution_yolov8s_gpu.png`
+Esto genera métricas de evaluación detalladas en los outputs.
 
-### 6. Generar el notebook técnico
+### 7. Generar el notebook técnico
 
 El notebook se genera programáticamente desde un script Python:
 
@@ -183,7 +194,7 @@ jupyter notebook notebooks/01_baseline_paper_replication.ipynb
 
 El notebook lee directamente de los archivos JSON/CSV de outputs/, así que refleja automáticamente cualquier nuevo experimento que se haya corrido.
 
-### 7. Compilar el documento LaTeX
+### 8. Compilar el documento LaTeX
 
 ```bash
 # Con Tectonic (recomendado, instala el package que falte automáticamente)
