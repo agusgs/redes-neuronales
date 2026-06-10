@@ -1,0 +1,23 @@
+\section{Conclusions and future works}
+
+We performed an interpretability analysis of SLT models based on the Transformer architecture by generating different visualizations based on attention scores. In summary, our interpretability analysis suggests that:
+
+\begin{enumerate}
+
+    \item Transformer models for SLT learn to pay attention to sequencial clusters rather than individual frames.\label{item:conclusion_clusters}
+
+    \item Cross-attention scores show a diagonal alignment between attended frames and gloss predicted, suggesting that the model is identifying the sign corresponding to each gloss.\label{item:conclusion_diag}
+
+    \item For the translation of a whole sentence, the model initially relies more in video frames but gradually shifts its focus to the previously predicted glosses.
+    
+    \item When translating longer sequences, the model relies more in glosses than in video frames, and patterns described in items \ref{item:conclusion_clusters} and \ref{item:conclusion_diag} cannot be seen that clearly.
+
+    \item We found patterns of sign segmentation in the encoder self-attention scores. These patterns are not present for bigger embedding sizes, harming the whole interpretability of the model.
+
+    \item When trained to generate text, the model still learns to focus on clusters of frames; however, these clusters do not align diagonally with words, as expected due to the grammatical differences between the languages. Determining whether the resulting alignment is meaningful requires validation by an expert translator.
+
+\end{enumerate}
+
+For future work, we plan to perform a more in-depth review of the results obtained for sign-to-text translation, incorporating the view of expert translators. Moreover, we plan to establish a formal definition of the clusters of frames that the model pays attention to, so we can quantitatively evaluate their identification and alignment, aiming to use these clusters for sign segmentation. 
+%Aside from that, we plan on experiment with different representations of the positional information in the frames that allow us to perform a keypoint-wise attention analysis. 
+Finally, we aim to replicate this analysis in other SLT datasets to analyze the generalizability of the obtained results to other languages.

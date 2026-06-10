@@ -1,0 +1,19 @@
+Videos were taken from four playlists:
+
+\begin{itemize}
+    
+    \item "Resumen semanal" (\textit{Weekly summary}) is the main playlist from where the videos were taken. Its videos follow the format described above where two hosts present the news from the latest weeks. It features varied topics, interviews, and special sections like movies or horoscopes.
+    
+    \item "Ley federal LSA" (\textit{LSA Federal Law}) presents in a similar format as "Resumen semanal" news about a law project about LSA in Argentina.
+    
+    \item "Último momento" (\textit{Breaking News}) has videos from people in different places presenting breaking news. Videos from this playlist usually have lower quality than the other playlists and were not recorded in such a professional way. They also cover a big variety of topics (no video presents the same piece of news as other). Therefore, this playlist is considered particularly difficult for a model to learn.
+    
+    \item "CN Sordos ecología" (\textit{CN sordos ecology}) is a section where only one presenter talks about topics regarding ecology. Videos from this playlist were not recorded in a studio like the ones from "Resumen Semanal", but have better quality than those in "Último momento".
+    
+\end{itemize}
+
+Figure \ref{fig:channel_screenshots} shows screenshots of the mentioned playlists. The different peculiarities of each one were taken into account to build different test, train, and validation sets, some expected to be more or less difficult for a model to learn depending on which playlist the videos were taken from. How this was done is described in section \ref{subsec:train_test_split}.
+
+The videos were taken from the aforementioned playlists, but mainly from "Resumen semanal" as it was the larger playlist and subtitles were available for most of its videos. Figure \ref{fig:hist_videos_by_playlists} shows the amount of videos taken from each playlist.
+
+\input{figures/videos_by_playlists}

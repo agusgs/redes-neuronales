@@ -1,0 +1,34 @@
+\section{Experimental Setup}
+
+\subsection{Dataset}
+
+The Greek Sign Language Dataset is a laboratory-made dataset that contains 10,290 samples composed of RGB video, their corresponding gloss representation, and the translation to written Greek language. These samples correspond to 331 different sentences repeated many times by different signers. This dataset has two main benefits over other publicly available datasets: 1) it contains the gloss representation of each sample, useful for performing interpretability analysis; 2) since this dataset was constructed for research purposes, it contains many repetitions of each sentence and no singletons or words with low frequency that may add noise to model training (a common issue in other popular on-the-wild SL datasets such as PHOENIX-2014-T~\cite{camgoz2018rwth}). As input for the STL model, we used the positional keypoints of each video, precomputed using MediaPipe~\cite{lugaresi2019mediapipe}.
+
+\subsection{Model}
+
+We trained a Transformer model~\cite{vaswani2017attention}, with a modified encoder for processing frames of pose keypoints as input data. This encoder consists of a 1 dimensional convolution run across the temporal dimension that generates an embedding of each frame. We used only one encoder layer and one decoder layer. Figure~\ref{fig:model_scheme} illustrates described model. This model and configuration were chosen as it allowed for direct interpretability of the attention weights while obtaining SoTA level Word Error Rate. For the main analysis described in this work we set the hidden dimension size to 16 to perform sign-to-gloss translation, but different sizes and sign-to-text translation were also tested. We discuss the results of these variations and their impact on the interpretability of the model in section~\ref{subsec:variations}. The results for all model configurations are shown in Table~\ref{tab:results}.
+
+\begin{figure}[htb]
+    \centering
+    \includegraphics[width=.8\linewidth]{assets/model_scheme.png}
+    \caption{\textbf{Architecture of the model used from pose to gloss SLT.}}
+    \label{fig:model_scheme}
+\end{figure}
+
+\begin{table}
+  \caption{Experimental results for alternative model configurations}
+  \label{tab:results}
+  \centering
+  \begin{tabular}{lllll}
+    \toprule
+    Model & Hidden Dim. Size & Target & Word Error Rate \\
+    \midrule
+    Ours & 16  & Gloss & 0.09  \\
+    Ours & 32  & Gloss & 0.06  \\
+    Ours & 64  & Gloss & 0.08  \\
+    Ours & 16  & Text  & 0.1   \\
+    \midrule
+    SoTA & -   & Text  & 0.06  \\
+    \bottomrule
+  \end{tabular}
+\end{table}

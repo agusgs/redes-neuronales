@@ -82,7 +82,7 @@ trabajo-parcial/
 - **Python 3.12.5** (recomendado vía [asdf](https://asdf-vm.com) que lee `.tool-versions`, o cualquier distribución equivalente). En macOS con asdf, ver más abajo.
 - **~3 GB de espacio libre** (datasets + entornos virtuales + datasets derivados).
 - **CPU** suficiente para CNN. **GPU NVIDIA con CUDA** recomendada para YOLO (CPU es ~20× más lento pero funciona).
-- En macOS: PyTorch+MPS (GPU de Apple Silicon) tiene un bug con BatchNorm que rompe el entrenamiento. Forzamos CPU en macOS.
+- **En macOS**: PyTorch+MPS (GPU de Apple Silicon) tiene un bug persistente en su versión 2.5.1 con `BatchNorm` que colapsa el modelo (el accuracy cae a ~6%). Por este motivo forzamos el uso de CPU por defecto para las CNNs (donde funciona a la perfección).
 
 ### 1. Crear el entorno virtual e instalar dependencias
 
@@ -228,5 +228,5 @@ Detalle completo en `Trabajo_LSA16.pdf` (sección 7). Resumen ejecutivo:
 Si al reproducir algún experimento obtenés resultados muy distintos a los reportados, es probable que sea por:
 
 - **Versión de PyTorch distinta a 2.5.1**: pueden cambiar comportamientos numéricos sutiles. Sugerimos respetar `requirements.txt`.
-- **MPS habilitado en macOS**: bloqueado por código; si tu setup lo activa, fuerza `--device cpu`.
+- **MPS habilitado en macOS**: Está bloqueado por defecto porque destruye las estadísticas de `BatchNorm` (llevando el accuracy al ~6%). Si pasás la flag `--device mps` experimentarás el colapso. Recomendamos usar `--device cpu` en Mac para los scripts de CNN.
 - **Datasets derivados sin regenerar**: si modificaste `src/preprocessing.py` o `src/yolo_annotations.py`, hay que regenerar los datasets antes de reentrenar.

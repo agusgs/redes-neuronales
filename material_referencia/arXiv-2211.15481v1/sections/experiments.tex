@@ -1,0 +1,57 @@
+\subsection{Proposed approach}
+
+A SLT model trained on \dbname is proposed to serve as baseline for future comparisons. The model used is similar to the one presented in \cite{kim2022keypoint}, using only the keypoint data extracted from the videos as input. However, instead of using recurrent layers we use a transformers as the main building blocks of the network.
+
+%\facu{Lo dijiste antes (al parrafo)} \pedro{En realidad antes hablaba de obtener el score de confianza, aca es para darselo al modelo} Before feeding the keypoints to the model we transform each keypoints' coordinates to a relative position respect to the person's center. This was made to avoid different representations for people in different places of the video. We chose to use the nose keypoint as the person center as it is typically on the center of the person with respect of the \(x\) axis and in most videos it is predicted with a high confidence. 
+%Then, for each keypoint, if its confidence score in a frame has a value lower than a threshold \(T\), the keypoint's position is re computed by interpolating its position in the previous and next frame that has a confidence score higher than \(T\).
+
+The proposed model then takes as input a list of \(F\) frames and predicts the words of its corresponding sentence one at a time. Each frame is a matrix of size \(2K\) that has the \(x\) and \(y\) position for the \(K\) keypoints and each sentence is encoded as a list of the embeddings of its words.
+
+\subsection{Metrics}
+
+Given the difficulty of \dbname dataset caused by having many words that appear few times, we proposed a new metric called WER-N, based on the traditional Word Error Rate (WER). WER-N mimics the top-N accuracy for classification models by not penalizing the model when it misses words from the target that were seen less than \(N\) times in the training set. The metric can be used in any problem that present tokens with low frequency.
+
+WER-N can be computed using a variant of the Edit Distance algorithm. For two strings \(s\) and \(t\), the distance \(d\) between the sub-strings \(s[0:i]\) and \(t[0:j]\) can be computed recursively using the formula:
+
+\begin{equation}
+\begin{split}
+    d[i,j] = min( &
+       d[i-1,j] + C(I)\\
+       & d[i,j-1] + C(D^*)\\
+       & d[i-1,j-1] + C(S^*))
+\end{split}
+\end{equation}
+
+Where \(C(I)\), \(C(D^*)\) and \(C(S^*)\) represent the cost of an insertion, deletion and substitution respectively. The WER-N metric modifies the traditional definitions of C(D) and C(S) by not penalizing some errors as follows.:
+
+\begin{equation}
+\begin{split}
+    C(D^*) & =
+        \begin{cases}
+            0 & \text{if frequency of token } t[j] \text{ is lower than } N \\
+            1 & \text{otherwise}
+        \end{cases}\\
+    C(S^*) & =
+        \begin{cases}
+            0 & \text{if } s[i]=t[j]\\
+            0 & \text{if frequency of token } t[j] \text{ is lower than } N \\
+            1 & \text{otherwise}
+        \end{cases}
+\end{split}
+\end{equation}
+
+\subsection{Experimental results}
+
+We performed two sets of experiments, using the two versions of the train and test sets presented in section \ref{subsec:stats}. We implemented the proposed model using PyTorch 
+%\cite{NEURIPS2019_9015} 
+and trained the model for 30 epochs in each experiment. We used the Adam optimizer
+%\cite{kingma2014adam} 
+and a learning rate of 0.0001. We used 75 frames per sample, obtaining an average of \(\sim15\) FPS over all samples in the dataset.
+
+The size of both the keypoint embeddings and the word embeddings was set to 64. The parameters for defining the transformer network were the same as the proposed in the original paper \cite{vaswani2017attention}. We used the Spacy Spanish \cite{spacy2} tokenizer for the sample labels.
+
+Only the 42 hands keypoints were used as the model input as those were the ones considered relevant for SLT. Finally, we used a threshold of \(T=0.3\) for the keypoint confidence. Full code for the model development, training and experimentation can be found in its GitHub repository\footnote{\modelrepourl}.
+
+\input{tables/model_metrics}
+
+Table \ref{tab:model_metrics} shows the result of evaluating the model over the two versions of the train-test sets. We used WER and the proposed WER-N with \(N=5\) and \(N=10\) as evaluation metrics. As it can be seen, the model does not perform well, although similar approaches had obtained decent results in other datasets like \cite{ko2019neural} or \cite{kim2022keypoint} on KETI dataset. It is interesting to notice that \cite{kim2022keypoint} also tried the same model over RWTH Phoenix dataset, that as table \ref{tab:bd_comparison} showed, has a bigger similarity to ours than the laboratory made datasets as KETI. Their model achieved a BLEU score of \(\sim85\) over KETI, but when evaluated over Phoenix it obtained a BLEU score of \(\sim13\) across all their experiments. Then it is not surprising that given the complexity of the presented dataset the models did not obtained good results.

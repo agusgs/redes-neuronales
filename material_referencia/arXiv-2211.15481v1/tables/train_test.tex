@@ -1,0 +1,22 @@
+\begin{table}
+\caption{Comparison between the two versions of the train-test sets.}
+\label{tab:train_test_comparison}
+\begin{center}
+    \begin{tabular}{ |p{4cm}|c|c c|c c| }
+        \hline
+        & \dbname & \multicolumn{2}{|c|}{Full version} & \multicolumn{2}{|c|}{Reduced version}\\ 
+        & & Train & Test & Train & Test \\
+        \hline
+        %signers & 103 & X & X & X & X\\
+        %duration [h] & 21.78 & 17.49 & 4.29 & 15.85 & 3.89\\
+        \# sentences & 14,880 & 11,065 & 2735 & 3767 & 910\\
+        \% unique sentences & 95.79\% & 96.64\% & 92.78\% & 96.88\% & 98.35\%\\
+        \hline
+        vocab. size & 14,239 & 12,385 & 5546 & 2694 & 1579\\
+        \% singletons & 50.21\% & 52.01\% & 61.9\% & 23.2\% & 48.83\%\\
+        \% sentences with singletons & 34.97\% & 40.98\% & 67.97\% & 14.36\% & 54.29\%\\
+        \% sentences with words not in train vocabulary & - & - & 59.2\% & - & 84.5\%\\
+        \hline
+    \end{tabular}
+\end{center}
+\end{table}

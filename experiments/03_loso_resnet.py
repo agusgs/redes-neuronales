@@ -152,6 +152,8 @@ def main() -> None:
                         help="Épocas (default: el del modelo elegido).")
     parser.add_argument("--augment", action="store_true",
                         help="Aplicar data augmentation.")
+    parser.add_argument("--device", default=None,
+                        help="Forzar un dispositivo (ej: 'cpu', 'mps', 'cuda').")
     parser.add_argument("--note", default="", help="Anotación para el log.")
     args = parser.parse_args()
 
@@ -170,11 +172,14 @@ def main() -> None:
     epochs = args.epochs if args.epochs is not None else spec.default_epochs
     config = TrainConfig(epochs=epochs, lr=spec.default_lr)
 
+    device_obj = torch.device(args.device) if args.device else None
+
     run_loso(
         image_dir=dirs[args.mode],
         name=names[args.mode],
         model=args.model,
         config=config,
+        device=device_obj,
         augment=args.augment,
         note=args.note
     )

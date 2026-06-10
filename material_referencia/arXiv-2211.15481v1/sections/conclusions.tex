@@ -1,0 +1,7 @@
+We have presented a new dataset from the Argentinian Sign Language. It is, to the best of our knowlegde, the first continuous dataset that will make it possible to train SLT models for LSA.
+
+The dataset was built using videos from the channel CN Sordos and shows a wide range of topics, signers, backgrounds and lightning conditions. It contains clips extracted from the videos, their corresponding label, the keypoints for each person in the video and, in case there is more than one person, an estimation of who is the one signing. Also a visualization tool was made available.
+
+We have also proposed two possible versions of train and test sets and trained on them a translation model that uses keypoint information to serve as baseline.
+
+As future works, we intend to train different state-of-the-art models over the dataset and compare their performance with the one achieved in other datasets such as Phoenix-RWTH. This models could take both video and keypoints information. Also, we plan on using data augmentation and one-shot learning techniques that will allow us to extract more information from the tokens or sentences that seldom appear on the dataset. Finally, we are working on a web tool that will allow people to use the translation model over a video recorded by themselves using a web cam.

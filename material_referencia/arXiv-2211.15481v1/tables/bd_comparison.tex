@@ -1,0 +1,31 @@
+\begin{table}
+\caption{Main features of the studied datasets.}
+\label{tab:bd_comparison}
+\begin{center}
+    \begin{tabular}{ |l|c|c|c|c|c|c| }
+        \hline
+        & PHOENIX* & SIGNUM & CSL & GSL & KETI & \dbname\\ 
+        \hline
+        language & German & German & Chinese & Greek & Korean & Spanish\\
+        sign language & GSL & GSL & CSL & GSL & KLS & LSA\\
+        real life & \textbf{Yes} & No & No & No & No & \textbf{Yes}\\
+        signers & 9 & 25 & 50 & 7 & 14 & \textbf{103}\\
+        duration [h] & 10.71 & 55.3 & \textbf{100+} & 9.51 & 28 & 21.78\\ 
+        \# samples & 7096 & \textbf{33,210} & 25,000 & 10,295 & 14,672 & 14,880\\ 
+        \hline
+        \# unique sentences & 5672 & 780 & 100 & 331 & 105 & \textbf{14,254}\\
+        \% unique sentences & 79.93\% & 2.35\% & 0.4\% & 3.21\% & 0.71\% & \textbf{95.79\%}\\
+        vocab. size (w) & 2887 & N/A & 178 & N/A & 419 & \textbf{14,239}\\ 
+        \# singletons (w) & 1077 & 0 & 0 & 0 & 0 & \textbf{7150}\\
+        \% singletons (w) & 37.3\% & 0\% & 0\% & 0\% & 0\% & \textbf{50.21\%}\\
+        vocab. size (gl) & \textbf{1066} & 450 & - & 310 & 524 & -\\
+        \# singletons (gl) & \textbf{337} & 0 & - & 0 & 0 & -\\
+        \# singletons (gl) & \textbf{31.61\%} & 0\% & - & 0\% & 0\% & -\\
+        \hline
+        resolution & 210x260 & 776x578 & \textbf{1920x1080} & 848x480 & \textbf{1920x1080} & \textbf{1920x1080}\\
+        fps & 25 & \textbf{30} & \textbf{30} & \textbf{30} & \textbf{30} & \textbf{30}\\
+        \hline
+    \end{tabular}
+*Data was not available for the whole PHOENIX dataset, so the table show its train set statistics.
+\end{center}
+\end{table}

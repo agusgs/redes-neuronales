@@ -1,0 +1,149 @@
+\documentclass{article}
+
+
+% if you need to pass options to natbib, use, e.g.:
+%     \PassOptionsToPackage{numbers, compress}{natbib}
+% before loading iai_neurips_2024
+
+
+% ready for submission
+\usepackage[final,nonatbib]{iai_neurips_2024}
+
+
+% to compile a preprint version, e.g., for submission to arXiv, add add the
+% [preprint] option:
+%     \usepackage[preprint]{iai_neurips_2024}
+
+
+% to compile a camera-ready version, add the [final] option, e.g.:
+%     \usepackage[final]{iai_neurips_2024}
+
+
+% to avoid loading the natbib package, add option nonatbib:
+%    \usepackage[nonatbib]{iai_neurips_2024}
+
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{xcolor}         % colors
+\usepackage{graphicx}
+\usepackage{subcaption}
+
+% For greek characters
+\usepackage{alphabeta} 
+
+\title{SignAttention: On the Interpretability of Transformer Models for Sign Language Translation}
+
+
+% The \author macro works with any number of authors. There are two commands
+% used to separate the names and addresses of multiple authors: \And and \AND.
+%
+% Using \And between authors leaves it to LaTeX to determine where to break the
+% lines. Using \AND forces a line break at that point. So, if LaTeX puts 3 of 4
+% authors names on the first line, and the last on the second line, try using
+% \AND instead of \And before the third author name.
+
+
+% \author{%
+%   David S.~Hippocampus\thanks{Use footnote for providing further information
+%     about author (webpage, alternative address)---\emph{not} for acknowledging
+%     funding agencies.} \\
+%   Department of Computer Science\\
+%   Cranberry-Lemon University\\
+%   Pittsburgh, PA 15213 \\
+%   \texttt{hippo@cs.cranberry-lemon.edu} \\
+%   % examples of more authors
+%   % \And
+%   % Coauthor \\
+%   % Affiliation \\
+%   % Address \\
+%   % \texttt{email} \\
+%   % \AND
+%   % Coauthor \\
+%   % Affiliation \\
+%   % Address \\
+%   % \texttt{email} \\
+%   % \And
+%   % Coauthor \\
+%   % Affiliation \\
+%   % Address \\
+%   % \texttt{email} \\
+%   % \And
+%   % Coauthor \\
+%   % Affiliation \\
+%   % Address \\
+%   % \texttt{email} \\
+% }
+
+\author{%
+  Pedro Alejandro Dal Bianco$^{1}$\thanks{Equal contribution.} \\
+  \texttt{pdalbianco@lidi.info.unlp.edu.ar} \\
+  \And
+  Oscar Agustín Stanchi$^{1,2}$\footnotemark[1] \\
+  \texttt{ostanchi@lidi.info.unlp.edu.ar} \\
+  \And
+  Facundo Manuel Quiroga$^{1,3}$ \\
+  \texttt{fquiroga@lidi.info.unlp.edu.ar} \\
+  \And
+  Franco Ronchetti$^{1,3}$ \\
+  \texttt{fronchetti@lidi.info.unlp.edu.ar} \\
+  \And
+  Enzo Ferrante$^{2,4}$ \\
+  \texttt{eferrante@dc.uba.ar} \\ \\
+  $^{1}$Instituto de Investigación en Informática LIDI, Universidad Nacional de La Plata \\
+  $^{2}$Consejo Nacional de Investigaciones Científicas y Técnicas (CONICET) \\
+  $^{3}$Comisión de Investigaciones Científicas de la Pcia. de Bs. As. (CIC-PBA) \\
+  $^{4}$Instituto de Ciencias de la Computación, Universidad de Buenos Aires \\
+}
+
+
+\begin{document}
+
+
+\maketitle
+
+
+\begin{abstract}
+
+This paper presents the first comprehensive interpretability analysis of a Transformer-based Sign Language Translation (SLT) model, focusing on the translation from video-based Greek Sign Language to glosses and text. Leveraging the Greek Sign Language Dataset, we examine the attention mechanisms within the model to understand how it processes and aligns visual input with sequential glosses. Our analysis reveals that the model pays attention to clusters of frames rather than individual ones, with a diagonal alignment pattern emerging between poses and glosses, which becomes less distinct as the number of glosses increases. We also explore the relative contributions of cross-attention and self-attention at each decoding step, finding that the model initially relies on video frames but shifts its focus to previously predicted tokens as the translation progresses. This work contributes to a deeper understanding of SLT models, paving the way for the development of more transparent and reliable translation systems essential for real-world applications.
+
+
+\end{abstract}
+
+
+\input{sections/1_introduction}
+
+\input{sections/2_related_work}
+
+\input{sections/3_experiments}
+
+\input{sections/4_interpretability}
+
+\input{sections/5_results}
+
+\input{sections/6_conclusions}
+
+% \begin{ack}
+% Use unnumbered first level headings for the acknowledgments. All acknowledgments go at the end of the paper before the list of references. Moreover, you are required to declare funding (financial activities supporting the submitted work) and competing interests (related financial activities outside the submitted work).
+% More information about this disclosure can be found at: \url{https://neurips.cc/Conferences/2024/PaperInformation/FundingDisclosure}.
+% Do {\bf not} include this section in the anonymized submission, only in the final paper. You can use the \texttt{ack} environment provided in the style file to automatically hide this section in the anonymized submission.
+% \end{ack}
+
+\medskip
+
+{ 
+\small
+%https://github.com/kzhai/Papers/blob/master/style/nips.bst
+\bibliographystyle{nips}
+\bibliography{bibliography}
+}
+
+\input{sections/A_appendix}
+
+\end{document}

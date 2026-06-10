@@ -5,8 +5,6 @@ __pycache__/
 .DS_Store
 
 # Generated outputs and models
-outputs/*
-!outputs/.gitkeep
 *.pt
 *.pth
 runs/*

@@ -54,7 +54,7 @@ def main() -> None:
     parser.add_argument("--patience", type=int, default=20,
                         help="Early stopping: épocas sin mejora antes de cortar.")
     parser.add_argument("--device", default="cpu",
-                        help="cpu|mps|0,1,... — usar 'cpu' por defecto, MPS rompe BN.")
+                        help="cpu|mps|0,1,... — usar 'mps' en Mac con Apple Silicon o '0' en NVIDIA.")
     parser.add_argument("--note", default="", help="Anotación libre para el log.")
     args = parser.parse_args()
 

@@ -28,6 +28,7 @@ import os
 import sys
 import time
 from pathlib import Path
+import torch
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -155,6 +156,8 @@ def main() -> None:
                         help="Aplicar data augmentation (rot ±10°, translate ±10%%, color jitter).")
     parser.add_argument("--seed-base", type=int, default=0,
                         help="Seed inicial. Runs usan seed_base, seed_base+1, ... (default: 0).")
+    parser.add_argument("--device", default=None,
+                        help="Forzar un dispositivo (ej: 'cpu', 'mps', 'cuda').")
     args = parser.parse_args()
 
     spec = MODEL_REGISTRY[args.model]
@@ -165,11 +168,13 @@ def main() -> None:
     modes = ["raw", "segmented", "canonical"] if args.mode == "all" else [args.mode]
     runners = {"raw": run_raw, "segmented": run_segmented, "canonical": run_canonical}
 
+    device_obj = torch.device(args.device) if args.device else None
+
     for mode in modes:
         try:
             result = runners[mode](
                 n_runs=args.n_runs, config=config, model=args.model,
-                augment=args.augment, seed_base=args.seed_base,
+                augment=args.augment, seed_base=args.seed_base, device=device_obj,
             )
         except FileNotFoundError as e:
             print(f"\n⚠️  No se pudo correr {mode}: {e}")

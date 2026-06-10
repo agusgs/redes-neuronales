@@ -1,0 +1,72 @@
+% This is samplepaper.tex, a sample chapter demonstrating the
+% LLNCS macro package for Springer Computer Science proceedings;
+% Version 2.21 of 2022/01/12
+\documentclass[runningheads]{llncs}
+
+\input{config}
+\begin{document}
+
+\title{\dbname: The first continuous Argentinian Sign Language dataset for Sign Language Translation}
+\titlerunning{\dbname: The first continuous LSA dataset}
+% If the paper title is too long for the running head, you can set
+% an abbreviated paper title here
+
+\author{
+Pedro Dal Bianco\inst{1,3}\orcidID{0000-0001-7197-8602} \and
+Gastón Ríos\inst{1,3}\orcidID{0000-0003-0252-7036} \and
+Franco Ronchetti\inst{1,2}\orcidID{0000-0003-3173-1327} \and
+Facundo Quiroga\inst{1,4}\orcidID{0000-0003-4495-4327} \and
+Oscar Stanchi\inst{1}\orcidID{0000-0003-0294-2053} \and
+Waldo Hasperué\inst{1,2}\orcidID{0000-0002-9950-1563} \and
+Alejandro Rosete \inst{5} \orcidID{0000-0002-4579-3556}
+}
+%
+\authorrunning{P. Dal Bianco et al.}
+% First names are abbreviated in the running head.
+% If there are more than two authors, 'et al.' is used.
+%
+\institute{Instituto de Investigación en Informática LIDI - Universidad Nacional de La Plata. Argentina \and
+Comisión de Investigaciones Científicas de la Pcia. de Bs. As. (CIC-PBA). Argentina \and
+Becario Doctoral UNLP \and Becario Postdoctoral UNLP \and
+Universidad Tecnológica de La Habana José Antonio Echeverría. Cuba.
+}
+%
+\maketitle              % typeset the header of the contribution
+%
+\begin{abstract}
+Sign language translation (SLT) is an active field of study that encompasses human-computer interaction, computer vision, natural language processing and machine learning. Progress on this field could lead to higher levels of integration of deaf people. This paper presents, to the best of our knowledge, the first continuous Argentinian Sign Language (LSA) dataset. It contains 14,880 sentence level videos of LSA extracted from the CN Sordos YouTube channel with labels and keypoints annotations for each signer. We also present a method for inferring the active signer, a detailed analysis of the characteristics of the dataset, a visualization tool to explore the dataset and a neural SLT model to serve as baseline for future experiments.
+
+\keywords{Sign Language Translation \and Computer Vision \and Big data \and Sign Language Dataset \and Deep learning.}
+\end{abstract}
+
+\section{Introduction}
+\label{sec:intro}
+\input{sections/intro}
+
+\section{Related work}
+\label{sec:related}
+\input{sections/related_work}
+
+\section{\dbname dataset}
+\label{sec:dataset}
+\input{sections/dataset}
+
+\section{Baseline experiments} 
+\label{sec:experiments}
+\input{sections/experiments}
+
+\section{Conclusions and Future work}
+\label{sec:conclusions}
+\input{sections/conclusions}
+
+
+%
+% ---- Bibliography ----
+%
+% BibTeX users should specify bibliography style 'splncs04'.
+% References will then be sorted and formatted in the correct style.
+%
+\bibliographystyle{splncs04}
+\bibliography{bibliography}
+
+\end{document}

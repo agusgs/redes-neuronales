@@ -1,0 +1,118 @@
+\begin{thebibliography}{10}
+
+\bibitem{de2023machine}
+De~Coster, M., D.~Shterionov, M.~Van~Herreweghe, et~al.
+\newblock Machine translation from signed to spoken languages: State of the art and challenges.
+\newblock \emph{Universal Access in the Information Society}, pages 1--27, 2023.
+
+\bibitem{camgoz2020sign}
+Camgoz, N.~C., O.~Koller, S.~Hadfield, et~al.
+\newblock Sign language transformers: Joint end-to-end sign language recognition and translation.
+\newblock In \emph{Proceedings of the IEEE/CVF conference on computer vision and pattern recognition}, pages 10023--10033. 2020.
+
+\bibitem{yin2020better}
+Yin, K., J.~Read.
+\newblock Better sign language translation with stmc-transformer.
+\newblock \emph{arXiv:2004.00588}, 2020.
+
+\bibitem{de2021frozen}
+De~Coster, M., K.~D'Oosterlinck, M.~Pizurica, et~al.
+\newblock Frozen pretrained transformers for neural sign language translation.
+\newblock In \emph{18th Biennial Machine Translation Summit (MT Summit 2021)}, pages 88--97. Association for Machine Translation in the Americas, 2021.
+
+\bibitem{aloysius2021incorporating}
+Aloysius, N., M.~Geetha, P.~Nedungadi.
+\newblock Incorporating relative position information in transformer-based sign language recognition and translation.
+\newblock \emph{IEEE Access}, 9:145929--145942, 2021.
+
+\bibitem{vashishth2019attention}
+Vashishth, S., S.~Upadhyay, G.~S. Tomar, et~al.
+\newblock Attention interpretability across nlp tasks.
+\newblock \emph{arXiv preprint arXiv:1909.11218}, 2019.
+
+\bibitem{adaloglou2020comprehensive}
+Adaloglou, N., T.~Chatzis, I.~Papastratis, et~al.
+\newblock A comprehensive study on sign language recognition methods.
+\newblock \emph{arXiv preprint arXiv:2007.12530}, 2020.
+
+\bibitem{moryossef2021evaluating}
+Moryossef, A., I.~Tsochantaridis, J.~Dinn, et~al.
+\newblock Evaluating the immediate applicability of pose estimation for sign language recognition.
+\newblock In \emph{Proceedings of the IEEE/CVF conference on computer vision and pattern recognition}, pages 3434--3440. 2021.
+
+\bibitem{raihan2024bengali}
+Raihan, M.~J., M.~I. Labib, A.~A.~J. Jim, et~al.
+\newblock Bengali-sign: A machine learning-based bengali sign language interpretation for deaf and non-verbal people.
+\newblock \emph{Sensors}, 24(16):5351, 2024.
+
+\bibitem{hu2023self}
+Hu, L., L.~Gao, Z.~Liu, et~al.
+\newblock Self-emphasizing network for continuous sign language recognition.
+\newblock In \emph{Proceedings of the AAAI Conference on Artificial Intelligence}, vol.~37, pages 854--862. 2023.
+
+\bibitem{doshi2017towards}
+Doshi-Velez, F., B.~Kim.
+\newblock Towards a rigorous science of interpretable machine learning.
+\newblock \emph{arXiv preprint arXiv:1702.08608}, 2017.
+
+\bibitem{lundberg2017unified}
+Lundberg, S.~M., S.-I. Lee.
+\newblock A unified approach to interpreting model predictions.
+\newblock \emph{Advances in neural information processing systems}, 30, 2017.
+
+\bibitem{selvaraju2017grad}
+Selvaraju, R.~R., M.~Cogswell, A.~Das, et~al.
+\newblock Grad-cam: Visual explanations from deep networks via gradient-based localization.
+\newblock In \emph{Proceedings of the IEEE international conference on computer vision}, pages 618--626. 2017.
+
+\bibitem{zhang2023heterogeneous}
+Zhang, H., Y.~Sun, Z.~Liu, et~al.
+\newblock Heterogeneous attention based transformer for sign language translation.
+\newblock \emph{Applied Soft Computing}, 144:110526, 2023.
+
+\bibitem{yin2023gloss}
+Yin, A., T.~Zhong, L.~Tang, et~al.
+\newblock Gloss attention for gloss-free sign language translation.
+\newblock In \emph{Proceedings of the IEEE/CVF conference on computer vision and pattern recognition}, pages 2551--2562. 2023.
+
+\bibitem{yin2022mlslt}
+Yin, A., Z.~Zhao, W.~Jin, et~al.
+\newblock Mlslt: Towards multilingual sign language translation.
+\newblock In \emph{Proceedings of the IEEE/CVF conference on computer vision and pattern recognition}, pages 5109--5119. 2022.
+
+\bibitem{tang2022gloss}
+Tang, S., R.~Hong, D.~Guo, et~al.
+\newblock Gloss semantic-enhanced network with online back-translation for sign language production.
+\newblock In \emph{Proceedings of the 30th ACM International Conference on Multimedia}, pages 5630--5638. 2022.
+
+\bibitem{camgoz2018rwth}
+Camg{\"o}z, N.~C., S.~Hadfield, O.~Koller, et~al.
+\newblock Rwth-phoenix-weather 2014 t: Parallel corpus of sign language video, gloss and translation.
+\newblock \emph{CVPR, Salt Lake City, UT}, 3:6, 2018.
+
+\bibitem{lugaresi2019mediapipe}
+Lugaresi, C., J.~Tang, H.~Nash, et~al.
+\newblock Mediapipe: A framework for building perception pipelines.
+\newblock \emph{arXiv preprint arXiv:1906.08172}, 2019.
+
+\bibitem{vaswani2017attention}
+Vaswani, A.
+\newblock Attention is all you need.
+\newblock \emph{Advances in Neural Information Processing Systems}, 2017.
+
+\bibitem{luo2020simplified}
+Luo, H., S.~Zhang, M.~Lei, et~al.
+\newblock Simplified self-attention for transformer-based end-to-end speech recognition.
+\newblock \emph{arXiv preprint arXiv:2005.10463}, 2020.
+
+\bibitem{lombrozo2016explanatory}
+Lombrozo, T.
+\newblock Explanatory preferences shape learning and inference.
+\newblock \emph{Trends in cognitive sciences}, 20(10):748--759, 2016.
+
+\bibitem{ylikoski2010dissecting}
+Ylikoski, P., J.~Kuorikoski.
+\newblock Dissecting explanatory power.
+\newblock \emph{Philosophical studies}, 148:201--219, 2010.
+
+\end{thebibliography}

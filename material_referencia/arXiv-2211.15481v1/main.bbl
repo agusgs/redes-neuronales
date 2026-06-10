@@ -1,0 +1,104 @@
+\begin{thebibliography}{10}
+\providecommand{\url}[1]{\texttt{#1}}
+\providecommand{\urlprefix}{URL }
+\providecommand{\doi}[1]{https://doi.org/#1}
+
+\bibitem{adaloglou2020comprehensive}
+Adaloglou, N., Chatzis, T., Papastratis, I., Stergioulas, A., Papadopoulos,
+  G.T., Zacharopoulou, V., Xydopoulos, G.J., Atzakas, K., Papazachariou, D.,
+  Daras, P.: A comprehensive study on sign language recognition methods. arXiv
+  preprint arXiv:2007.12530  \textbf{2}(2) (2020)
+
+\bibitem{borg2020phonologically}
+Borg, M., Camilleri, K.P.: Phonologically-meaningful subunits for deep
+  learning-based sign language recognition. In: European Conference on Computer
+  Vision. pp. 199--217. Springer (2020)
+
+\bibitem{bragg2019sign}
+Bragg, D., Koller, O., Bellard, M., Berke, L., Boudreault, P., Braffort, A.,
+  Caselli, N., Huenerfauth, M., Kacorri, H., Verhoef, T., et~al.: Sign language
+  recognition, generation, and translation: An interdisciplinary perspective.
+  In: The 21st international ACM SIGACCESS conference on computers and
+  accessibility. pp. 16--31 (2019)
+
+\bibitem{camgoz2018neural}
+Camgoz, N.C., Hadfield, S., Koller, O., Ney, H., Bowden, R.: Neural sign
+  language translation. In: Proceedings of the IEEE conference on computer
+  vision and pattern recognition. pp. 7784--7793 (2018)
+
+\bibitem{instituto2018estudio}
+de~Estad{\'\i}stica~y Censos, I.N.: Estudio nacional sobre el perfil de las
+  personas con discapacidad: Resultados definitivos 2018 (2018)
+
+\bibitem{url:lsa}
+y~Empleos, E.B.: La lengua de señas argentina (lsa),
+  \url{https://idiomas.becasyempleos.com.ar/lengua-de-senas/}, accessed:
+  2022-05-28
+
+\bibitem{fang2017rmpe}
+Fang, H.S., Xie, S., Tai, Y.W., Lu, C.: Rmpe: Regional multi-person pose
+  estimation. In: Proceedings of the IEEE international conference on computer
+  vision. pp. 2334--2343 (2017)
+
+\bibitem{spacy2}
+Honnibal, M., Montani, I.: {spaCy 2}: Natural language understanding with
+  {B}loom embeddings, convolutional neural networks and incremental parsing
+  (2017), to appear
+
+\bibitem{huang2018video}
+Huang, J., Zhou, W., Zhang, Q., Li, H., Li, W.: Video-based sign language
+  recognition without temporal segmentation. In: Proceedings of the AAAI
+  Conference on Artificial Intelligence. vol.~32 (2018)
+
+\bibitem{kim2022keypoint}
+Kim, Y., Kwak, M., Lee, D., Kim, Y., Baek, H.: Keypoint based sign language
+  translation without glosses. arXiv preprint arXiv:2204.10511  (2022)
+
+\bibitem{ko2019neural}
+Ko, S.K., Kim, C.J., Jung, H., Cho, C.: Neural sign language translation based
+  on human keypoint estimation. Applied Sciences  \textbf{9}(13), ~2683 (2019)
+
+\bibitem{koller2020quantitative}
+Koller, O.: Quantitative survey of the state of the art in sign language
+  recognition. arXiv preprint arXiv:2008.09918  (2020)
+
+\bibitem{moore2020fiftyone}
+Moore, B.E., Corso, J.J.: Fiftyone. GitHub. Note:
+  https://github.com/voxel51/fiftyone  (2020)
+
+\bibitem{ronchetti2016sign}
+Ronchetti, F., Quiroga, F., Estrebou, C., Lanzarini, L., Rosete, A.: Sign
+  languague recognition without frame-sequencing constraints: A proof of
+  concept on the argentinian sign language. In: Ibero-American Conference on
+  Artificial Intelligence. pp. 338--349. Springer (2016)
+
+\bibitem{ronchetti2016lsa64}
+Ronchetti, F., Quiroga, F., Estrebou, C.A., Lanzarini, L.C., Rosete, A.: Lsa64:
+  an argentinian sign language dataset. In: XXII Congreso Argentino de Ciencias
+  de la Computaci{\'o}n (CACIC 2016). (2016)
+
+\bibitem{url:cnsordos}
+Sordos, C.: Cn sordos youtube channel (2020),
+  \url{https://www.youtube.com/channel/UCTi9woRHA4r8e3oEWF8hxTA}, last accessed
+  12 May 2022
+
+\bibitem{stokoe1980sign}
+Stokoe, W.C.: Sign language structure. Annual Review of Anthropology
+  \textbf{9}(1),  365--390 (1980)
+
+\bibitem{vaswani2017attention}
+Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A.N.,
+  Kaiser, {\L}., Polosukhin, I.: Attention is all you need. Advances in neural
+  information processing systems  \textbf{30} (2017)
+
+\bibitem{von2008significance}
+Von~Agris, U., Knorr, M., Kraiss, K.F.: The significance of facial features for
+  automatic sign language recognition. In: 2008 8th IEEE International
+  Conference on Automatic Face \& Gesture Recognition. pp.~1--6. IEEE (2008)
+
+\bibitem{zhou2020spatial}
+Zhou, H., Zhou, W., Zhou, Y., Li, H.: Spatial-temporal multi-cue network for
+  continuous sign language recognition. In: Proceedings of the AAAI Conference
+  on Artificial Intelligence. vol.~34, pp. 13009--13016 (2020)
+
+\end{thebibliography}
